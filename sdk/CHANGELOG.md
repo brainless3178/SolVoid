@@ -2,11 +2,13 @@
 
 All notable changes to the SolVoid SDK will be documented in this file.
 
-## [1.1.4] - 2026-01-31
+## [1.1.5] - 2026-01-31
 
 ### Synchronized
-- **Circuit-to-SDK Parity**: Finalized the synchronization of G1/G2 point verification signatures across the ZK proving pipeline.
-- **Professionalized Documentation**: Completed the transition to institutional-grade technical communication across all READMEs and internal comments.
+- **Comprehensive Ecosystem Documentation**: Synchronized the SDK documentation with the full protocol specifications.
+- **GitHub Integration Reference**: Explicitly linked all cryptographic, CLI, and Relayer references to the main repository.
+
+## [1.1.4] - 2026-01-31
 
 ## [1.1.3] - 2026-01-31
 
