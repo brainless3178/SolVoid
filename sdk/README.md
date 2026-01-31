@@ -2,6 +2,10 @@
 
 The official integration layer for the **SolVoid Privacy Protocol**. This SDK provides a comprehensive software interface for decentralized applications requiring Zero-Knowledge (ZK) transaction anonymity, identity obfuscation, and privacy auditing on Solana.
 
+<div align="center">
+  <img src="https://github.com/brainless3178/SolVoid/raw/main/solvoid_assets.png" alt="SolVoid Architecture Infographic" width="800">
+</div>
+
 [![NPM Version](https://img.shields.io/npm/v/solvoid.svg)](https://www.npmjs.com/package/solvoid)
 [![Protocol Status](https://img.shields.io/badge/Protocol-Beta-cyan.svg)](https://github.com/brainless3178/SolVoid)
 [![License: MIT](https://img.shields.io/badge/License-MIT-gray.svg)](https://opensource.org/licenses/MIT)
@@ -13,10 +17,6 @@ The official integration layer for the **SolVoid Privacy Protocol**. This SDK pr
 While this package provides the SDK, SolVoid is a multi-layered privacy infrastructure. To access the full ecosystem—including the **ZK circuits**, **Shadow Relayer**, **Atomic Rescue CLI**, and **Web Dashboard**—refer to the primary repository:
 
 🔗 **[github.com/brainless3178/SolVoid](https://github.com/brainless3178/SolVoid)**
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/brainless3178/SolVoid/main/solvoid_assets.png" alt="SolVoid Architecture Infographic" width="800">
-</div>
 
 ---
 
@@ -38,7 +38,7 @@ graph TD
 
 ---
 
-## 🚀 Ecosystem Infrastructure & Features
+## 🚀 Key Ecosystem Infrastructure & Features
 
 ### 1. Advanced Zero-Knowledge Stack
 - **Groth16 Proving Pipeline**: High-performance proving implementation on the **BN254 curve**.
