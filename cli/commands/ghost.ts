@@ -19,6 +19,9 @@ export function registerGhostCommand(program: Command) {
     .option('--json', 'Return raw score data in JSON format')
     .option('--share', 'Generate social metadata and sharing strings')
     .option('--verify <proof>', 'Validate an external ZK privacy proof')
+    .option('--rpc <url>', 'Specify Solana RPC endpoint')
+    .option('--program <id>', 'Specify SolVoid program ID')
+    .option('--relayer <url>', 'Specify Shadow Relayer API URL')
     .action(async (address: string, options) => {
       try {
         if (options.verify) {
@@ -28,12 +31,12 @@ export function registerGhostCommand(program: Command) {
 
         console.log(chalk.cyan(' Initiating wallet privacy analysis...\n'));
 
-        /** Use standardized protocol configuration from global options. */
+        /** Use standardized protocol configuration from options or global environment. */
         const client = new SolVoidClient(
           {
-            rpcUrl: program.opts().rpc || 'https://api.mainnet-beta.solana.com',
-            programId: program.opts().program || 'Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i',
-            relayerUrl: program.opts().relayer || 'http://localhost:3000'
+            rpcUrl: options.rpc || process.env.RPC_URL || 'https://api.devnet.solana.com',
+            programId: options.program || process.env.PROGRAM_ID || '3QcKRYWquzbBR3UpKeh4aKVCSpoHy89UT8gyovzRzzan',
+            relayerUrl: options.relayer || process.env.SHADOW_RELAYER_URL || 'http://localhost:3000'
           },
           {} as any
         );
@@ -74,10 +77,6 @@ export function registerGhostCommand(program: Command) {
 
       } catch (error: any) {
         console.error(chalk.red('\n Critical error during score generation:'), error.message);
-        console.error(chalk.gray('\nDiagnostic Checklist:'));
-        console.error(chalk.gray('  • Verify target address format (Base58)'));
-        console.error(chalk.gray('  • Verify RPC endpoint connectivity'));
-        console.error(chalk.gray('  • Attempt retry with custom --rpc override'));
         process.exit(1);
       }
     });

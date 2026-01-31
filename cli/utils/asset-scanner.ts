@@ -4,6 +4,7 @@
 
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { EnhancedPythPriceFeed } from './enhanced-pyth-feed';
 
 export interface AssetSummary {
   sol: {
@@ -55,7 +56,7 @@ export class AssetScanner {
       this.scanNFTs(address)
     ]);
 
-    const totalValue = sol.lamports + tokens.reduce((sum, t) => sum + parseFloat(t.valueUSD), 0);
+    const totalValueUSD = parseFloat(sol.valueUSD) + tokens.reduce((sum, t) => sum + parseFloat(t.valueUSD), 0);
 
     return {
       sol,
@@ -63,8 +64,8 @@ export class AssetScanner {
       nfts,
       total: {
         count: 1 + tokens.length + nfts.length,
-        value: totalValue,
-        valueUSD: totalValue.toFixed(2)
+        value: totalValueUSD,
+        valueUSD: totalValueUSD.toFixed(2)
       }
     };
   }
@@ -76,8 +77,9 @@ export class AssetScanner {
     const balance = await this.connection.getBalance(address);
     const solBalance = balance / LAMPORTS_PER_SOL;
 
-    // In production, fetch real SOL price
-    const solPrice = 100; // Placeholder USD price
+    const pyth = new EnhancedPythPriceFeed(this.connection);
+    const priceData = await pyth.getPrice(new PublicKey('So11111111111111111111111111111111111111112'));
+    const solPrice = priceData.usd || 100; // Fallback to 100 if oracle fails
     const valueUSD = (solBalance * solPrice).toFixed(2);
 
     return {

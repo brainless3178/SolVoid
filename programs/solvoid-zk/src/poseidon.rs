@@ -43,12 +43,24 @@ impl PoseidonHasherWrapper {
     }
 }
 
-/** 
- * ARCHITECTURAL SPECIFICATION: On-chain ZK Compatibility
- * Protocol integrity requires that our on-chain hashing matches the circuit definition.
- * 
- * Future Integration Strategy:
- * We recommend adopting a proof-only verification model where the on-chain program
- * verifies the Groth16 proof of a commitment's integrity without recomputing the
- * Poseidon hash on-chain, thereby minimizing compute unit consumption.
- */
+/// ARCHITECTURAL SPECIFICATION: On-chain ZK Compatibility
+/// Protocol integrity requires that our on-chain hashing matches the circuit definition.
+/// 
+/// Future Integration Strategy:
+/// We recommend adopting a proof-only verification model where the on-chain program
+/// verifies the Groth16 proof of a commitment's integrity without recomputing the
+/// Poseidon hash on-chain, thereby minimizing compute unit consumption.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_poseidon_hasher_wrapper() {
+        let a = [1u8; 32];
+        let b = [2u8; 32];
+        
+        let result = PoseidonHasherWrapper::hash_two_bytes(&a, &b);
+        assert!(result.is_ok());
+    }
+}

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-01
+
+### Added
+- **Production Asset Oracles**: Integrated real-time Pyth Network pricing into the `AssetScanner`, replacing static price placeholders.
+- **Poseidon Privacy Badges**: Replaced SHA256 badge mockups with cryptographically secure Poseidon commitments, enabling future on-chain ZK verification.
+- **Atomic Rescue v2**: Fully integrated the `solvoid-zk` Anchor program into the `RescueEngine`, utilizing real PDAs and program discriminators for shield operations.
+- **Mainnet MEV Shielding**: Implemented production Jito MEV bundle submission in the `RescueEngine` for front-running protection.
+- **Risk-Aware Forensics**: Connected `ThreatIntelligence` to Solscan Risk API for real-time address reputation and threat analysis.
+- **Full TypeScript Migration**: Converted all remaining `.js` utilities and infrastructure components to TypeScript for maximum type safety and production readiness.
+
+### Changed
+- **Rescue Orchestration**: The `rescue` command now requires a private key for transaction signing while allowing public keys for analysis-only mode.
+- **Architecture**: Standardized all utility imports to use the newly compiled TypeScript modules.
+
+### Fixed
+- **Value Calculation**: Resolved a critical bug in `AssetScanner` where total value was incorrectly summing lamports and USD values.
+- **Relayer Sanitization**: Enhanced timestamp verification and replay protection in the `secure-service`.
+
 ## [1.2.0] - 2026-01-31
 
 ### Added

@@ -28,13 +28,14 @@ echo ""
 echo " Compiling Rescue Circuit..."
 
 # Compile rescue circuit
-circom circuits/rescue.circom \
+circom ../circuits/rescue.circom \
     --r1cs \
     --wasm \
     --c \
     --sym \
-    -l node_modules/circomlib/circuits \
-    -o circuits/build/
+    -l ../../node_modules/circomlib/circuits \
+    -o ../circuits/build/ \
+    --O2
 
 echo " Rescue circuit compiled successfully!"
 
@@ -42,13 +43,14 @@ echo ""
 echo " Compiling Withdraw Circuit..."
 
 # Compile withdraw circuit
-circom circuits/withdraw.circom \
+circom ../circuits/withdraw.circom \
     --r1cs \
     --wasm \
     --c \
     --sym \
-    -l node_modules/circomlib/circuits \
-    -o circuits/build/
+    -l ../../node_modules/circomlib/circuits \
+    -o ../circuits/build/ \
+    --O2
 
 echo " Withdraw circuit compiled successfully!"
 
@@ -66,23 +68,23 @@ fi
 
 # Generate rescue circuit zkey
 echo " Generating rescue circuit zkey..."
-npx snarkjs groth16 setup circuits/build/rescue.r1cs pot14_final.ptau circuits/keys/rescue_0000.zkey
-npx snarkjs zkey contribute circuits/keys/rescue_0000.zkey circuits/keys/rescue_0001.zkey --name="1st Contributor Name" -v
-npx snarkjs zkey export verificationkey circuits/keys/rescue_0001.zkey circuits/keys/rescue_verification_key.json
+npx snarkjs groth16 setup ../circuits/build/rescue.r1cs ../pot14_final.ptau ../circuits/keys/rescue_0000.zkey
+npx snarkjs zkey contribute ../circuits/keys/rescue_0000.zkey ../circuits/keys/rescue_0001.zkey --name="1st Contributor Name" -v
+npx snarkjs zkey export verificationkey ../circuits/keys/rescue_0001.zkey ../circuits/keys/rescue_verification_key.json
 
 # Copy final zkey
-cp circuits/keys/rescue_0001.zkey circuits/keys/rescue.zkey
+cp ../circuits/keys/rescue_0001.zkey ../circuits/keys/rescue.zkey
 
 echo " Rescue circuit zkey generated!"
 
 # Generate withdraw circuit zkey
 echo " Generating withdraw circuit zkey..."
-npx snarkjs groth16 setup circuits/build/withdraw.r1cs pot14_final.ptau circuits/keys/withdraw_0000.zkey
-npx snarkjs zkey contribute circuits/keys/withdraw_0000.zkey circuits/keys/withdraw_0001.zkey --name="1st Contributor Name" -v
-npx snarkjs zkey export verificationkey circuits/keys/withdraw_0001.zkey circuits/keys/withdraw_verification_key.json
+npx snarkjs groth16 setup ../circuits/build/withdraw.r1cs ../pot14_final.ptau ../circuits/keys/withdraw_0000.zkey
+npx snarkjs zkey contribute ../circuits/keys/withdraw_0000.zkey ../circuits/keys/withdraw_0001.zkey --name="1st Contributor Name" -v
+npx snarkjs zkey export verificationkey ../circuits/keys/withdraw_0001.zkey ../circuits/keys/withdraw_verification_key.json
 
 # Copy final zkey
-cp circuits/keys/withdraw_0001.zkey circuits/keys/withdraw.zkey
+cp ../circuits/keys/withdraw_0001.zkey ../circuits/keys/withdraw.zkey
 
 echo " Withdraw circuit zkey generated!"
 
@@ -90,10 +92,10 @@ echo ""
 echo " Copying files to project root..."
 
 # Copy WASM and ZKEY files to project root for easy access
-cp circuits/build/rescue.wasm ./
-cp circuits/build/withdraw.wasm ./
-cp circuits/keys/rescue.zkey ./
-cp circuits/keys/withdraw.zkey ./
+cp ../circuits/build/rescue.wasm ./
+cp ../circuits/build/withdraw.wasm ./
+cp ../circuits/keys/rescue.zkey ./
+cp ../circuits/keys/withdraw.zkey ./
 
 echo ""
 echo " ZK Circuit Compilation Complete!"

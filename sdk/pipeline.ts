@@ -1,4 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
+import * as bs58 from 'bs58';
 import { PrivacyEngine } from './privacy-engine';
 import { PrivacyShield } from './privacy/shield';
 import { EventBus } from './events/bus';
@@ -67,27 +68,47 @@ export class PrivacyPipeline {
                     header: {
                         numRequiredSignatures: rawTx.transaction.message.header.numRequiredSignatures,
                     },
-                    instructions: rawTx.transaction.message.compiledInstructions.map((ix) => ({
-                        programIdIndex: ix.programIdIndex,
-                        accounts: ix.accountKeyIndexes,
-                        data: Buffer.from(ix.data).toString('base64')
-                    }))
+                    instructions: rawTx.transaction.message.compiledInstructions.map((ix) => {
+                        let dataStr = '';
+                        const data = ix.data;
+                        if ((data as any) instanceof Uint8Array || Buffer.isBuffer(data) || Array.isArray(data)) {
+                            dataStr = Buffer.from(data as any).toString('base64');
+                        } else if (typeof data === 'string') {
+                            dataStr = data;
+                        }
+                        return {
+                            programIdIndex: ix.programIdIndex,
+                            accounts: ix.accountKeyIndexes,
+                            data: dataStr
+                        };
+                    })
                 },
                 meta: {
                     innerInstructions: rawTx.meta?.innerInstructions?.map(ii => ({
                         index: ii.index,
-                        instructions: ii.instructions.map(ix => ({
-                            programIdIndex: ix.programIdIndex,
-                            accounts: ix.accounts,
-                            data: Buffer.from(ix.data).toString('base64')
-                        }))
+                        instructions: ii.instructions.map(ix => {
+                            let dataStr = '';
+                            const data = ix.data;
+                            if ((data as any) instanceof Uint8Array || Buffer.isBuffer(data) || Array.isArray(data)) {
+                                dataStr = Buffer.from(data as any).toString('base64');
+                            } else if (typeof data === 'string') {
+                                dataStr = data;
+                            }
+                            return {
+                                programIdIndex: ix.programIdIndex,
+                                accounts: ix.accounts,
+                                data: dataStr
+                            };
+                        })
                     })) ?? null,
                     logMessages: rawTx.meta?.logMessages ?? null
                 },
-                signatures: rawTx.transaction.signatures
+                signatures: rawTx.transaction.signatures.map(s => {
+                    if (typeof s === 'string') return s;
+                    return bs58.encode(s as Uint8Array);
+                })
             };
 
-            // Boundary Enforcement: External -> Internal (Rule 10)
             const metadata: DataMetadata = {
                 origin: DataOrigin.CHAIN,
                 trust: DataTrust.TRUSTED,

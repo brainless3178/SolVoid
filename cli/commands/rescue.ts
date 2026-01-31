@@ -2,7 +2,9 @@ import { Command } from 'commander';
 import { PublicKey, Connection, Keypair } from '@solana/web3.js';
 import chalk from 'chalk';
 import ora from 'ora';
-import { AtomicRescueEngine } from '../utils/atomic-rescue-engine';
+import { RescueEngine } from '../utils/rescue-engine';
+import { AssetScanner } from '../utils/asset-scanner';
+import { ThreatDetector } from '../utils/threat-detector';
 
 interface RescueOptions {
   to?: string;
@@ -13,6 +15,9 @@ interface RescueOptions {
   autoGenerate?: boolean;
   monitor?: boolean;
   mevProtection?: boolean;
+  rpc?: string;
+  program?: string;
+  relayer?: string;
 }
 
 /**
@@ -32,31 +37,47 @@ export function registerRescueCommand(program: Command) {
     .option('--auto-generate', 'Initialize a fresh destination address')
     .option('--monitor', 'Activate post-remediation threat monitoring')
     .option('--mev-protection', 'Enable advanced MEV shielding')
+    .option('--rpc <url>', 'Specify Solana RPC endpoint')
+    .option('--program <id>', 'Specify SolVoid program ID')
+    .option('--relayer <url>', 'Specify Shadow Relayer API URL')
     .action(async (wallet: string, options: RescueOptions) => {
       try {
         displayRescueBanner(options.reason || 'unknown');
 
-        const atomicRescueEngine = new AtomicRescueEngine();
-        await (atomicRescueEngine as any).init();
+        const rpcUrl = options.rpc || process.env.RPC_URL || 'https://api.devnet.solana.com';
+        const programId = options.program || process.env.PROGRAM_ID || '3QcKRYWquzbBR3UpKeh4aKVCSpoHy89UT8gyovzRzzan';
+        const connection = new Connection(rpcUrl, 'confirmed');
+
+        const rescueEngine = new RescueEngine(connection, programId);
+        const scanner = new AssetScanner(connection);
+        const detector = new ThreatDetector(connection);
 
         const { keypair, publicKey } = await parseWalletInput(wallet);
 
-        if (!keypair) {
+        if (!keypair && !options.dryRun) {
           console.log(chalk.red('\n Execution Failed: Continuous rescue requires private key authorization.'));
           console.log(chalk.gray('Supplied public key is restricted to analysis-only mode.\n'));
           process.exit(1);
+        }
+
+        const assets = await scanner.scan(publicKey);
+        const threats = await detector.scan(publicKey);
+
+        if (threats.length > 0) {
+          console.log(chalk.red(`\n ACTIVE THREATS DETECTED: ${threats.length} `));
+          threats.forEach(t => console.log(chalk.gray(` - [${t.severity}] ${t.description} `)));
         }
 
         let safeAddress: PublicKey;
 
         if (options.to) {
           safeAddress = new PublicKey(options.to);
-          console.log(chalk.cyan(`\n Remediation Destination: ${safeAddress.toBase58()}`));
+          console.log(chalk.cyan(`\n Remediation Destination: ${safeAddress.toBase58()} `));
         } else if (options.autoGenerate) {
           const newWallet = Keypair.generate();
           safeAddress = newWallet.publicKey;
-          console.log(chalk.cyan(`\n Fresh Destination Initialized: ${safeAddress.toBase58()}`));
-          console.log(chalk.yellow(`  VAULT REQUIREMENT: SECURE THE GENERATED PRIVATE KEY:`));
+          console.log(chalk.cyan(`\n Fresh Destination Initialized: ${safeAddress.toBase58()} `));
+          console.log(chalk.yellow(`  VAULT REQUIREMENT: SECURE THE GENERATED PRIVATE KEY: `));
           console.log(chalk.gray(Buffer.from(newWallet.secretKey).toString('base64')));
           console.log();
         } else {
@@ -68,13 +89,13 @@ export function registerRescueCommand(program: Command) {
         console.log(chalk.bold.cyan('              ATOMIC REMEDIATION PLAN'));
         console.log(chalk.bold.cyan('\n'));
 
-        console.log(`${chalk.bold('Source:')}      ${publicKey.toBase58()}`);
-        console.log(`${chalk.bold('Destination:')} ${safeAddress.toBase58()}`);
-        console.log(`${chalk.bold('Priority:')}    ${options.emergency ? chalk.red.bold('EMERGENCY') : chalk.yellow('Standard')}`);
-        console.log(`${chalk.bold('Anonymity:')}   ${chalk.green('ZK-Optimized')}`);
+        console.log(`${chalk.bold('Source:')}      ${publicKey.toBase58()} `);
+        console.log(`${chalk.bold('Destination:')} ${safeAddress.toBase58()} `);
+        console.log(`${chalk.bold('Priority:')}    ${options.emergency ? chalk.red.bold('EMERGENCY') : chalk.yellow('Standard')} `);
+        console.log(`${chalk.bold('Anonymity:')}   ${chalk.green('ZK-Optimized')} `);
 
         if (options.jitoBundle) {
-          console.log(`${chalk.bold('MEV Shield:')}  ${chalk.green('Jito MEV Bundle Active')}`);
+          console.log(`${chalk.bold('MEV Shield:')}  ${chalk.green('Jito MEV Bundle Active')} `);
         }
 
         console.log(chalk.bold.cyan('\n\n'));
@@ -96,14 +117,14 @@ export function registerRescueCommand(program: Command) {
         try {
           const startTime = Date.now();
 
-          const result = await atomicRescueEngine.executeAtomicRescue(
-            keypair,
-            safeAddress,
-            true,
-            (alert: any) => {
-              console.log(chalk.red(`\n THREAT ALERT: ${alert.type}`));
-            }
-          );
+          const result = await rescueEngine.executeAtomicRescue({
+            sourceKeypair: keypair!,
+            destination: safeAddress,
+            assets: assets,
+            emergencyMode: !!options.emergency,
+            useJitoBundle: !!options.jitoBundle,
+            reason: options.reason || 'privacy'
+          });
 
           const executionTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
@@ -117,7 +138,7 @@ export function registerRescueCommand(program: Command) {
 
         } catch (error: any) {
           rescueSpinner.fail('Orchestration failed.');
-          console.log(chalk.red(`\n Error Trace: ${error.message}\n`));
+          console.log(chalk.red(`\n Error Trace: ${error.message} \n`));
 
           if (error.message.includes('insufficient funds')) {
             console.log(chalk.yellow(' Requirement: Ensure sufficient SOL balance for priority gas fees.'));
@@ -143,25 +164,25 @@ ${chalk.red.bold(' ------------------------------------------------------- ')}
 ${chalk.red.bold(' |           PRIVATE KEY COMPROMISE DETECTED           | ')}
 ${chalk.red.bold(' |        IMMEDIATE REMEDIATION PATH ACTIVE            | ')}
 ${chalk.red.bold(' ------------------------------------------------------- ')}
-    `,
+`,
     'mev-attack': `
 ${chalk.red.bold(' ------------------------------------------------------- ')}
 ${chalk.red.bold(' |              ACTIVE MEV ATTACK DETECTED             | ')}
 ${chalk.red.bold(' |         FRONT-RUNNING MITIGATION INITIALIZED        | ')}
 ${chalk.red.bold(' ------------------------------------------------------- ')}
-    `,
+`,
     'drainer': `
 ${chalk.red.bold(' ------------------------------------------------------- ')}
 ${chalk.red.bold(' |            ACTIVE WALLET DRAINER DETECTED           | ')}
 ${chalk.red.bold(' |         PRIORITY ASSET ROTATION MANDATORY           | ')}
 ${chalk.red.bold(' ------------------------------------------------------- ')}
-    `,
+`,
     'privacy': `
 ${chalk.cyan.bold(' ------------------------------------------------------- ')}
 ${chalk.cyan.bold(' |               PRIVACY ROTATION INITIATED            | ')}
 ${chalk.cyan.bold(' |         ATOMIC ANONYMITY RECOVERY ACTIVE            | ')}
 ${chalk.cyan.bold(' ------------------------------------------------------- ')}
-    `
+`
   };
 
   console.log(banners[reason as keyof typeof banners] || banners.privacy);
@@ -174,15 +195,15 @@ ${chalk.cyan.bold(' ------------------------------------------------------- ')}
 function displaySuccessBanner(result: any, executionTime: string): void {
   console.log(chalk.green.bold('\n ATOMIC REMEDIATION STATUS: OPERATIONAL\n'));
 
-  console.log(`${chalk.bold('Total Latency:')}    ${chalk.green(executionTime + 's')}`);
+  console.log(`${chalk.bold('Total Latency:')}    ${chalk.green(executionTime + 's')} `);
   console.log(`${chalk.bold('Signature Trace:')}  ${result.signature?.slice(0, 32)}...`);
 
   if (result.assets) {
     const totalValue = result.assets.reduce((sum: number, asset: any) => sum + (asset.usdValue || 0), 0);
-    console.log(`${chalk.bold('Remediated Value:')} ${chalk.green('$' + totalValue.toFixed(2) + ' USD')}`);
+    console.log(`${chalk.bold('Remediated Value:')} ${chalk.green('$' + totalValue.toFixed(2) + ' USD')} `);
   }
 
-  console.log(`${chalk.bold('Security Status:')}  ${chalk.green('BULLETPROOF')}`);
+  console.log(`${chalk.bold('Security Status:')}  ${chalk.green('BULLETPROOF')} `);
   console.log(chalk.green.bold('\n Asset state successfully rotated and secured.\n'));
 }
 

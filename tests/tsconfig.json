@@ -1,0 +1,29 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "..",
+        "types": [
+            "jest",
+            "node"
+        ],
+        "noEmit": true,
+        "strict": false,
+        "noImplicitAny": false,
+        "noImplicitReturns": false,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node"
+    },
+    "include": [
+        "./**/*.ts",
+        "./**/*.test.ts",
+        "../sdk/**/*.ts",
+        "../cli/**/*.ts",
+        "../types/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

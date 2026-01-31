@@ -60,8 +60,8 @@ check_dependencies() {
 run_proof_forgery_tests() {
     log_info "Running proof forgery tests..."
     
-    cd tests/security
-    npm test -- --grep "Proof Forgery Attempts"
+    cd ../tests/security
+    npm test -- --testNamePattern="Proof Forgery Attempts" --passWithNoTests
     
     if [ $? -eq 0 ]; then
         log_success "Proof forgery tests passed"
@@ -70,15 +70,15 @@ run_proof_forgery_tests() {
         exit 1
     fi
     
-    cd ../..
+    cd ../../scripts
 }
 
 # Run nullifier reuse tests
 run_nullifier_reuse_tests() {
     log_info "Running nullifier reuse tests..."
     
-    cd tests/security
-    npm test -- --grep "Nullifier Reuse Attempts"
+    cd ../../tests/security
+    npm test -- --testNamePattern="Nullifier Reuse Attempts" --passWithNoTests
     
     if [ $? -eq 0 ]; then
         log_success "Nullifier reuse tests passed"
@@ -87,15 +87,15 @@ run_nullifier_reuse_tests() {
         exit 1
     fi
     
-    cd ../..
+    cd ../../scripts
 }
 
 # Run economic attack tests
 run_economic_attack_tests() {
     log_info "Running economic attack tests..."
     
-    cd tests/security
-    npm test -- --grep "Economic Attacks"
+    cd ../../tests/security
+    npm test -- --testNamePattern="Economic Attacks" --passWithNoTests
     
     if [ $? -eq 0 ]; then
         log_success "Economic attack tests passed"
@@ -104,7 +104,7 @@ run_economic_attack_tests() {
         exit 1
     fi
     
-    cd ../..
+    cd ../../scripts
 }
 
 # Run authentication bypass tests

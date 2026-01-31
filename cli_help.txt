@@ -1,0 +1,10 @@
+
+SolVoid: The Digital Fortress for Solana
+
+Commands:
+  protect <address>    Execute a comprehensive privacy leak audit
+  rescue <address>     Initiate atomic asset recovery for compromised wallets
+  shield <amount>      Execute a private deposit (Surgical Shielding)
+  withdraw <secret> <nullifier> <recipient>   Execute an unlinkable ZK withdrawal
+  ghost <address>      Calculate decentralized Privacy Ghost Score
+

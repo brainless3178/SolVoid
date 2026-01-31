@@ -1,247 +1,242 @@
-import { PrivacyShield } from '../../sdk/privacy/shield';
-import { SolVoidClient } from '../../sdk/client';
-import { Connection, Keypair } from '@solana/web3.js';
+/**
+ * Cryptographic Consistency Tests
+ * Verifies Poseidon hashing, commitment generation, and Merkle tree operations
+ */
+
+import { PoseidonHasher, PoseidonUtils } from '../../sdk/crypto/poseidon';
+import { Connection, PublicKey } from '@solana/web3.js';
 import * as crypto from 'crypto';
+
+const RPC_ENDPOINT = process.env.RPC_URL || 'https://api.devnet.solana.com';
 
 describe('Cryptographic Consistency Tests', () => {
     let connection: Connection;
-    let shield: PrivacyShield;
-    let client: SolVoidClient;
-    let mockWallet: any;
 
-    beforeEach(() => {
-        connection = new Connection('https://api.devnet.solana.com');
-        
-        mockWallet = {
-            publicKey: Keypair.generate().publicKey,
-            signTransaction: jest.fn(),
-            signAllTransactions: jest.fn(),
-        };
-
-        // Mock IDL for testing
-        const mockIdl = {
-            address: '11111111111111111111111111111111',
-            metadata: {},
-            instructions: [],
-            accounts: [],
-            events: [],
-            errors: [],
-            types: [],
-        };
-
-        shield = new PrivacyShield(connection, mockIdl, mockWallet);
-        client = new SolVoidClient({
-            rpcUrl: 'https://api.devnet.solana.com',
-            programId: '11111111111111111111111111111111'
-        }, mockWallet);
+    beforeAll(() => {
+        connection = new Connection(RPC_ENDPOINT, 'confirmed');
     });
 
-    describe('Commitment Generation Consistency', () => {
-        it('should generate identical commitments using same secret/nullifier', () => {
+    describe('Poseidon Hash', () => {
+        it('produces consistent hashes for identical inputs', async () => {
+            const input1 = Buffer.from('0'.repeat(64), 'hex');
+            const input2 = Buffer.from('0'.repeat(64), 'hex');
+
+            const hash1 = await PoseidonHasher.hashTwoInputs(input1, input2);
+            const hash2 = await PoseidonHasher.hashTwoInputs(input1, input2);
+
+            expect(hash1.toString('hex')).toBe(hash2.toString('hex'));
+            expect(hash1.length).toBe(32);
+        });
+
+        it('produces different hashes for different inputs', async () => {
+            const input1 = crypto.randomBytes(32);
+            const input2 = crypto.randomBytes(32);
+            const input3 = crypto.randomBytes(32);
+
+            const hash1 = await PoseidonHasher.hashTwoInputs(input1, input2);
+            const hash2 = await PoseidonHasher.hashTwoInputs(input1, input3);
+
+            expect(hash1.toString('hex')).not.toBe(hash2.toString('hex'));
+        });
+
+        it('produces 32-byte output', async () => {
+            for (let i = 0; i < 10; i++) {
+                const left = crypto.randomBytes(32);
+                const right = crypto.randomBytes(32);
+                const hash = await PoseidonHasher.hashTwoInputs(left, right);
+
+                expect(hash.length).toBe(32);
+                expect(hash.toString('hex')).toMatch(/^[0-9a-f]{64}$/);
+            }
+        });
+    });
+
+    describe('Commitment Generation', () => {
+        it('generates valid commitment from secret, nullifier, and amount', async () => {
             const secret = crypto.randomBytes(32);
             const nullifier = crypto.randomBytes(32);
-            
-            // Access poseidonHash via generateCommitment to test consistency
-            const commitmentData = shield.generateCommitment();
-            const commitment1 = Buffer.from(commitmentData.commitment, 'hex');
-            
-            // Generate second commitment with same values (need to mock random)
-            const mockCrypto = crypto as any;
-            const originalRandomBytes = crypto.randomBytes;
-            const fixedSecret = secret;
-            const fixedNullifier = nullifier;
-            mockCrypto.randomBytes = jest.fn().mockImplementation((size: number) => {
-                if (size === 32) {
-                    return size === 32 && Math.random() > 0.5 ? fixedSecret : fixedNullifier;
-                }
-                return originalRandomBytes(size);
-            });
-            
-            const commitmentData2 = shield.generateCommitment();
-            const commitment2 = Buffer.from(commitmentData2.commitment, 'hex');
-            
-            // Restore original randomBytes
-            mockCrypto.randomBytes = originalRandomBytes;
-            
-            expect(commitment1).toEqual(commitment2);
-            expect(commitment1.length).toBe(32);
+            const amount = BigInt(1000000);
+
+            const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
+
+            expect(commitment.length).toBe(32);
+            expect(commitment.toString('hex')).toMatch(/^[0-9a-f]{64}$/);
         });
 
-        it('should match commitment generation between client and shield', () => {
-            const secretHex = crypto.randomBytes(32).toString('hex');
-            const nullifierHex = crypto.randomBytes(32).toString('hex');
-            
-            // Test shield commitment generation
-            const commitmentData = shield.generateCommitment();
-            const shieldCommitment = Buffer.from(commitmentData.commitment, 'hex');
-            
-            // Simulate client commitment generation logic
-            const poseidonHash = (left: Buffer, right: Buffer): Buffer => {
-                const combined = Buffer.concat([left, right]);
-                return crypto.createHash('blake2b512')
-                    .update(combined)
-                    .digest()
-                    .slice(0, 32);
-            };
-            
-            const clientCommitment = poseidonHash(
-                Buffer.from(secretHex, 'hex'), 
-                Buffer.from(nullifierHex, 'hex')
-            );
-            
-            expect(shieldCommitment.toString('hex')).toBe(clientCommitment.toString('hex'));
-        });
-    });
-
-    describe('Nullifier Hash Consistency', () => {
-        it('should generate consistent nullifier hashes', () => {
+        it('produces different commitments for different secrets', async () => {
+            const secret1 = crypto.randomBytes(32);
+            const secret2 = crypto.randomBytes(32);
             const nullifier = crypto.randomBytes(32);
-            const zero = Buffer.alloc(32, 0);
-            
-            const nullifierHash1 = shield.poseidonHash(nullifier, zero);
-            const nullifierHash2 = shield.poseidonHash(nullifier, zero);
-            
-            expect(nullifierHash1).toEqual(nullifierHash2);
-            expect(nullifierHash1.length).toBe(32);
+            const amount = BigInt(1000000);
+
+            const commitment1 = await PoseidonHasher.computeCommitment(secret1, nullifier, amount);
+            const commitment2 = await PoseidonHasher.computeCommitment(secret2, nullifier, amount);
+
+            expect(commitment1.toString('hex')).not.toBe(commitment2.toString('hex'));
         });
 
-        it('should match nullifier hash generation between client and shield', () => {
-            const nullifierHex = crypto.randomBytes(32).toString('hex');
-            
-            // Test shield nullifier generation
-            const commitmentData = shield.generateCommitment();
-            const shieldNullifierHash = Buffer.from(commitmentData.nullifierHash, 'hex');
-            
-            // Simulate client nullifier hash generation
-            const poseidonHash = (left: Buffer, right: Buffer): Buffer => {
-                const combined = Buffer.concat([left, right]);
-                return crypto.createHash('blake2b512')
-                    .update(combined)
-                    .digest()
-                    .slice(0, 32);
-            };
-            
-            const clientNullifierHash = poseidonHash(
-                Buffer.from(nullifierHex, 'hex'), 
-                Buffer.alloc(32, 0)
-            );
-            
-            expect(shieldNullifierHash.toString('hex')).toBe(clientNullifierHash.toString('hex'));
+        it('produces different commitments for different amounts', async () => {
+            const secret = crypto.randomBytes(32);
+            const nullifier = crypto.randomBytes(32);
+
+            const commitment1 = await PoseidonHasher.computeCommitment(secret, nullifier, BigInt(1000000));
+            const commitment2 = await PoseidonHasher.computeCommitment(secret, nullifier, BigInt(2000000));
+
+            expect(commitment1.toString('hex')).not.toBe(commitment2.toString('hex'));
+        });
+
+        it('is deterministic', async () => {
+            const secret = Buffer.from('a'.repeat(64), 'hex');
+            const nullifier = Buffer.from('b'.repeat(64), 'hex');
+            const amount = BigInt(500000);
+
+            const commitment1 = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
+            const commitment2 = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
+
+            expect(commitment1.toString('hex')).toBe(commitment2.toString('hex'));
         });
     });
 
-    describe('Merkle Tree Consistency', () => {
-        it('should generate consistent Merkle proofs', async () => {
-            const commitments = Array.from({ length: 8 }, () => 
-                crypto.randomBytes(32).toString('hex')
-            );
-            
-            const proof1 = await shield.getMerkleProof(0, commitments);
-            const proof2 = await shield.getMerkleProof(0, commitments);
-            
-            expect(proof1.proof).toEqual(proof2.proof);
-            expect(proof1.indices).toEqual(proof2.indices);
+    describe('Nullifier Hash', () => {
+        it('computes valid nullifier hash', async () => {
+            const nullifier = crypto.randomBytes(32);
+            const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
+
+            expect(nullifierHash.length).toBe(32);
+            expect(nullifierHash.toString('hex')).toMatch(/^[0-9a-f]{64}$/);
         });
 
-        it('should calculate correct Merkle root', async () => {
-            const commitments = Array.from({ length: 4 }, () => 
-                crypto.randomBytes(32).toString('hex')
-            );
-            
-            const proof = await shield.getMerkleProof(0, commitments);
-            
-            // Calculate root using same logic as client
-            const poseidonHash = (left: Buffer, right: Buffer): Buffer => {
-                const combined = Buffer.concat([left, right]);
-                return crypto.createHash('blake2b512')
-                    .update(combined)
-                    .digest()
-                    .slice(0, 32);
-            };
-            
-            let currentHash = Buffer.from(commitments[0], 'hex');
-            
-            for (let i = 0; i < proof.proof.length; i++) {
-                const sibling = Buffer.from(proof.proof[i], 'hex');
-                if (proof.indices[i] === 0) {
-                    const leftCopy = Buffer.alloc(32);
-                    const rightCopy = Buffer.alloc(32);
-                    currentHash.copy(leftCopy);
-                    sibling.copy(rightCopy);
-                    currentHash = poseidonHash(leftCopy, rightCopy);
-                } else {
-                    const leftCopy = Buffer.alloc(32);
-                    const rightCopy = Buffer.alloc(32);
-                    sibling.copy(leftCopy);
-                    currentHash.copy(rightCopy);
-                    currentHash = poseidonHash(leftCopy, rightCopy);
-                }
-            }
-            
-            const calculatedRoot = currentHash.toString('hex');
-            expect(calculatedRoot).toMatch(/^[0-9a-fA-F]{64}$/);
-            expect(calculatedRoot).not.toBe('00'.repeat(32)); // Should not be zero
+        it('is deterministic', async () => {
+            const nullifier = Buffer.from('c'.repeat(64), 'hex');
+
+            const hash1 = await PoseidonHasher.computeNullifierHash(nullifier);
+            const hash2 = await PoseidonHasher.computeNullifierHash(nullifier);
+
+            expect(hash1.toString('hex')).toBe(hash2.toString('hex'));
+        });
+
+        it('produces unique hashes for different nullifiers', async () => {
+            const nullifier1 = crypto.randomBytes(32);
+            const nullifier2 = crypto.randomBytes(32);
+
+            const hash1 = await PoseidonHasher.computeNullifierHash(nullifier1);
+            const hash2 = await PoseidonHasher.computeNullifierHash(nullifier2);
+
+            expect(hash1.toString('hex')).not.toBe(hash2.toString('hex'));
         });
     });
 
-    describe('ZK Proof Input Consistency', () => {
-        it('should use consistent nullifierHash in ZK proof generation', async () => {
-            const secretHex = crypto.randomBytes(32).toString('hex');
-            const nullifierHex = crypto.randomBytes(32).toString('hex');
-            const rootHex = '00'.repeat(32);
-            const mockMerklePath = {
-                proof: ['00'.repeat(32)],
-                indices: [0]
-            };
-            
-            // Mock snarkjs to capture inputs
-            const mockSnarkjs = {
-                groth16: {
-                    fullProve: jest.fn().mockResolvedValue({
-                        proof: { pi_a: [], pi_b: [[]], pi_c: [] },
-                        publicSignals: []
-                    })
-                }
-            };
-            
-            // Temporarily replace require
-            const originalRequire = require;
-            require = jest.fn().mockReturnValue(mockSnarkjs);
-            
-            try {
-                await shield.generateZKProof(
-                    secretHex,
-                    nullifierHex,
-                    rootHex,
-                    mockMerklePath,
-                    'mock.wasm',
-                    'mock.zkey'
-                );
-                
-                // Test expected nullifier hash using same logic as shield
-            const poseidonHash = (left: Buffer, right: Buffer): Buffer => {
-                const combined = Buffer.concat([left, right]);
-                return crypto.createHash('blake2b512')
-                    .update(combined)
-                    .digest()
-                    .slice(0, 32);
-            };
-            
-            const expectedNullifierHash = poseidonHash(
-                Buffer.from(nullifierHex, 'hex'), 
-                Buffer.alloc(32, 0)
-            ).toString('hex');
-                
-                expect(mockSnarkjs.groth16.fullProve).toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        nullifierHash: expectedNullifierHash
-                    }),
-                    'mock.wasm',
-                    'mock.zkey'
-                );
-            } finally {
-                require = originalRequire;
+    describe('Merkle Tree Operations', () => {
+        it('computes Merkle root from commitments', async () => {
+            const commitments: Buffer[] = [];
+            for (let i = 0; i < 4; i++) {
+                const secret = crypto.randomBytes(32);
+                const nullifier = crypto.randomBytes(32);
+                const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, BigInt(100000));
+                commitments.push(commitment);
             }
+
+            const level1Left = await PoseidonHasher.hashTwoInputs(commitments[0], commitments[1]);
+            const level1Right = await PoseidonHasher.hashTwoInputs(commitments[2], commitments[3]);
+            const root = await PoseidonHasher.hashTwoInputs(level1Left, level1Right);
+
+            expect(root.length).toBe(32);
+            expect(root.toString('hex')).toMatch(/^[0-9a-f]{64}$/);
+        });
+
+        it('produces consistent roots for same commitments', async () => {
+            const commitment1 = Buffer.from('1'.repeat(64), 'hex');
+            const commitment2 = Buffer.from('2'.repeat(64), 'hex');
+
+            const parent1 = await PoseidonHasher.hashTwoInputs(commitment1, commitment2);
+            const parent2 = await PoseidonHasher.hashTwoInputs(commitment1, commitment2);
+
+            expect(parent1.toString('hex')).toBe(parent2.toString('hex'));
+        });
+
+        it('produces different roots when commitments change', async () => {
+            const commitment1 = Buffer.from('1'.repeat(64), 'hex');
+            const commitment2a = Buffer.from('2'.repeat(64), 'hex');
+            const commitment2b = Buffer.from('3'.repeat(64), 'hex');
+
+            const root1 = await PoseidonHasher.hashTwoInputs(commitment1, commitment2a);
+            const root2 = await PoseidonHasher.hashTwoInputs(commitment1, commitment2b);
+
+            expect(root1.toString('hex')).not.toBe(root2.toString('hex'));
+        });
+    });
+
+    describe('PoseidonUtils', () => {
+        it('converts hex to buffer and back', () => {
+            const original = 'abcdef0123456789'.repeat(4);
+            const buffer = PoseidonUtils.hexToBuffer(original);
+            const result = PoseidonUtils.bufferToHex(buffer);
+
+            expect(result).toBe(original);
+            expect(buffer.length).toBe(32);
+        });
+
+        it('creates zero buffers', () => {
+            const zero = PoseidonUtils.zeroBuffer();
+
+            expect(zero.length).toBe(32);
+            expect(zero.toString('hex')).toBe('0'.repeat(64));
+        });
+
+        it('validates 32-byte buffers', () => {
+            const valid = Buffer.alloc(32);
+            expect(() => PoseidonUtils.validate32Bytes(valid)).not.toThrow();
+
+            const invalid = Buffer.alloc(16);
+            expect(() => PoseidonUtils.validate32Bytes(invalid)).toThrow();
+        });
+    });
+
+    describe('Solana Connection', () => {
+        it('connects to network', async () => {
+            const version = await connection.getVersion();
+            expect(version['solana-core']).toBeDefined();
+        });
+
+        it('fetches slot height', async () => {
+            const slot = await connection.getSlot();
+            expect(slot).toBeGreaterThan(0);
+        });
+
+        it('retrieves address balance', async () => {
+            const testAddress = new PublicKey('9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g');
+            const balance = await connection.getBalance(testAddress);
+            expect(balance).toBeGreaterThanOrEqual(0);
+        });
+    });
+
+    describe('Deposit Flow', () => {
+        it('executes complete deposit preparation', async () => {
+            const secret = crypto.randomBytes(32);
+            const nullifier = crypto.randomBytes(32);
+            const amount = BigInt(100000000);
+
+            const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
+            const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
+
+            expect(commitment.length).toBe(32);
+            expect(nullifierHash.length).toBe(32);
+            expect(commitment.toString('hex')).not.toBe(nullifierHash.toString('hex'));
+        });
+
+        it('guarantees commitment uniqueness', async () => {
+            const commitments = new Set<string>();
+
+            for (let i = 0; i < 10; i++) {
+                const secret = crypto.randomBytes(32);
+                const nullifier = crypto.randomBytes(32);
+                const commitment = await PoseidonHasher.computeCommitment(
+                    secret, nullifier, BigInt(1000000 * (i + 1))
+                );
+                commitments.add(commitment.toString('hex'));
+            }
+
+            expect(commitments.size).toBe(10);
         });
     });
 });

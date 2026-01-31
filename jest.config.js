@@ -3,7 +3,7 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     roots: ['<rootDir>/tests'],
-    testMatch: ['**/*.test.ts'],
+    testMatch: ['**/*.test.ts', '**/*.test.js'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     collectCoverageFrom: [
         'sdk/**/*.ts',
@@ -23,11 +23,17 @@ module.exports = {
     },
     transform: {
         '^.+\\.tsx?$': ['ts-jest', {
-            tsconfig: 'tsconfig.json'
+            tsconfig: 'tests/tsconfig.json',
+            diagnostics: {
+                ignoreCodes: [151001]
+            }
         }],
         '^.+\\.jsx?$': ['ts-jest', {
-            tsconfig: 'tsconfig.json',
-            useESM: true
+            tsconfig: 'tests/tsconfig.json',
+            useESM: true,
+            diagnostics: {
+                ignoreCodes: [151001]
+            }
         }]
     },
     testTimeout: 10000,

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { IdlRegistry } from '../../sdk/semantics/idl-registry';
 import { Idl } from '../../sdk/semantics/types';
+import { Keypair } from '@solana/web3.js';
 
 describe('IdlRegistry', () => {
     let registry: IdlRegistry;
@@ -20,26 +21,25 @@ describe('IdlRegistry', () => {
     });
 
     it('should register custom IDLs', () => {
-        const mockIdl: Idl = {
+        const customIdl: Idl = {
             version: '0.1.0',
-            name: 'mock',
+            name: 'custom_program',
             instructions: []
         };
-        const mockProgramId = 'Mock111111111111111111111111111111111';
-        registry.registerIdl(mockProgramId, mockIdl);
+        const programId = Keypair.generate().publicKey.toBase58();
+        registry.registerIdl(programId, customIdl);
 
-        // Using any cast to access private cache for test verification
-        const saved = (registry as any).cache.get(mockProgramId);
-        expect(saved?.name).toBe('mock');
+        const saved = (registry as any).cache.get(programId);
+        expect(saved?.name).toBe('custom_program');
     });
 
     it('should return null for unknown programs', async () => {
-        const idl = await registry.fetchIdl('Unknown11111111111111111111111111111111');
+        const unknownProgramId = Keypair.generate().publicKey.toBase58();
+        const idl = await registry.fetchIdl(unknownProgramId);
         expect(idl).toBeNull();
     });
 
     it('should handle invalid public keys gracefully in fetchIdl', async () => {
-        // Since IdlRegistry.fetchIdl calls enforce(PublicKeySchema), it should throw
         await expect(registry.fetchIdl('invalid-key')).rejects.toThrow(/Invalid Base58 Public Key/);
     });
 });

@@ -68,7 +68,7 @@ function registerAdminCommand(program: Command, client: SolVoidClient) {
         });
 }
 
-async function main() {
+export async function main() {
     const args = process.argv.slice(2);
     const command = args[0];
 

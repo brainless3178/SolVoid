@@ -1,4 +1,5 @@
 import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 import { Buffer } from 'buffer';
 import { PrivacyShield } from './privacy/shield';
 import { PrivacyPipeline } from './pipeline';
@@ -50,14 +51,19 @@ export class SolVoidClient {
         /**
          * Schema-enforced IDL definition. 
          * We maintain a minimal IDL structure for cross-version Anchor compatibility.
+         * Discriminators are sha256("global:<instruction_name>").slice(0, 8)
          */
         const idlUnvalidated = {
             version: "0.1.0",
             name: "solvoid_zk",
-            instructions: [],
+            instructions: [
+                { name: "trigger_emergency_mode", discriminator: [126, 216, 208, 35, 143, 119, 70, 133], accounts: [{ name: "state", isMut: true, isSigner: false }, { name: "economic_state", isMut: true, isSigner: false }, { name: "authority", isMut: false, isSigner: true }], args: [{ name: "multiplier", type: "u64" }, { name: "reason", type: "string" }] },
+                { name: "disable_emergency_mode", discriminator: [43, 167, 224, 195, 40, 132, 68, 80], accounts: [{ name: "state", isMut: true, isSigner: false }, { name: "economic_state", isMut: true, isSigner: false }, { name: "authority", isMut: false, isSigner: true }], args: [] },
+                { name: "trigger_circuit_breaker", discriminator: [18, 87, 214, 42, 239, 136, 160, 81], accounts: [{ name: "state", isMut: true, isSigner: false }, { name: "economic_state", isMut: true, isSigner: false }, { name: "authority", isMut: false, isSigner: true }], args: [] },
+                { name: "reset_circuit_breaker", discriminator: [225, 48, 84, 136, 90, 146, 26, 149], accounts: [{ name: "state", isMut: true, isSigner: false }, { name: "economic_state", isMut: true, isSigner: false }, { name: "authority", isMut: false, isSigner: true }], args: [] }
+            ],
             accounts: [],
             types: [],
-            events: [],
             errors: [],
             metadata: {
                 address: config.programId
@@ -254,5 +260,74 @@ export class SolVoidClient {
             nullifierHash,
             root: rootHex
         };
+    }
+
+    /**
+     * Triggers protocol-wide emergency fee multiplier.
+     * Requirement: Administrative authority authorization.
+     */
+    public async triggerEmergencyMode(multiplier: bigint, reason: string): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.protocolShield.getProgramId());
+        const [economicStatePda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.protocolShield.getProgramId());
+
+        return await (this.protocolShield as any).program.methods
+            .triggerEmergencyMode(new BN(multiplier.toString()), reason)
+            .accounts({
+                state: statePda,
+                economicState: economicStatePda,
+                authority: (this.protocolShield as any).program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    /**
+     * Deactivates emergency mode and resets protocol fees.
+     */
+    public async disableEmergencyMode(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.protocolShield.getProgramId());
+        const [economicStatePda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.protocolShield.getProgramId());
+
+        return await (this.protocolShield as any).program.methods
+            .disableEmergencyMode()
+            .accounts({
+                state: statePda,
+                economicState: economicStatePda,
+                authority: (this.protocolShield as any).program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    /**
+     * Pauses all withdrawals via the protocol Circuit Breaker.
+     */
+    public async triggerCircuitBreaker(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.protocolShield.getProgramId());
+        const [economicStatePda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.protocolShield.getProgramId());
+
+        return await (this.protocolShield as any).program.methods
+            .triggerCircuitBreaker()
+            .accounts({
+                state: statePda,
+                economicState: economicStatePda,
+                authority: (this.protocolShield as any).program.provider.publicKey,
+            })
+            .rpc();
+    }
+
+    /**
+     * Resets the Circuit Breaker and resumes protocol operations.
+     */
+    public async resetCircuitBreaker(): Promise<string> {
+        const [statePda] = PublicKey.findProgramAddressSync([Buffer.from('state')], this.protocolShield.getProgramId());
+        const [economicStatePda] = PublicKey.findProgramAddressSync([Buffer.from('economic_state')], this.protocolShield.getProgramId());
+
+        return await (this.protocolShield as any).program.methods
+            .resetCircuitBreaker()
+            .accounts({
+                state: statePda,
+                economicState: economicStatePda,
+                authority: (this.protocolShield as any).program.provider.publicKey,
+            })
+            .rpc();
     }
 }
