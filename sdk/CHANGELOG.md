@@ -2,11 +2,13 @@
 
 All notable changes to the SolVoid SDK will be documented in this file.
 
-## [1.1.5] - 2026-01-31
+## [1.1.6] - 2026-01-31
 
 ### Synchronized
-- **Comprehensive Ecosystem Documentation**: Synchronized the SDK documentation with the full protocol specifications.
-- **GitHub Integration Reference**: Explicitly linked all cryptographic, CLI, and Relayer references to the main repository.
+- **Master Documentation Merger**: Integrated the comprehensive root ecosystem documentation into the SDK README for full context visibility on NPM.
+- **Architectural Reference**: Added high-fidelity architecture diagrams and data-flow specifications directly into the SDK package.
+
+## [1.1.5] - 2026-01-31
 
 ## [1.1.4] - 2026-01-31
 

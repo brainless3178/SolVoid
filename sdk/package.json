@@ -1,6 +1,6 @@
 {
   "name": "solvoid",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "SolVoid Privacy SDK - Zero-knowledge privacy for Solana",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
