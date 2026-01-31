@@ -1,56 +1,56 @@
-#  Getting Started with SolVoid
+# Getting Started: Protocol Onboarding
 
-This guide will help you set up your development environment and perform your first private transaction on Solana using SolVoid.
+This document outlines the standard procedures for environment initialization and the execution of a primary privacy cycle.
 
-##  Prerequisites
+## Dependency Prerequisites
 
-Before you begin, ensure you have the following installed:
+Operating environments must satisfy the following hardware and software requirements:
 
 - **Node.js:** v18.0.0 or higher ([Download](https://nodejs.org/))
 - **Solana Tool Suite:** v1.18.0 or higher ([Install](https://docs.solana.com/cli/install-solana-cli-tools))
 - **Anchor Framework:** v0.30.0 ([Install](https://www.anchor-lang.com/docs/installation))
 - **Rust:** v1.75.0 or higher ([Install](https://www.rust-lang.org/tools/install))
-- **Git:** For cloning the repository.
+- **Git:** Required for repository orchestration.
 
 ---
 
-##  Installation
+## Installation
 
-### 1. Clone the Repository
+### 1. Repository Acquisition
 ```bash
 git clone https://github.com/brainless3178/SolVoid.git
 cd SolVoid
 ```
 
-### 2. Install Dependencies
+### 2. Dependency Resolution
 ```bash
-# Install root dependencies
+# Initialize root environment
 npm install
 
-# Install SDK dependencies
+# Initialize SDK components
 cd sdk && npm install && cd ..
 
-# Install Dashboard dependencies
+# Initialize Dashboard interface
 cd dashboard && npm install && cd ..
 ```
 
-### 3. Build the ZK Circuits
-SolVoid requires compiled ZK circuits and proving keys. This process can take several minutes depending on your hardware.
+### 3. ZK Circuit Compilation
+SolVoid requires compiled ZK circuits and Groth16 proving keys. Compilation latency varies based on local compute capacity.
 ```bash
 ./scripts/build-zk.sh
 ```
-*Note: This script requires `circom` and `snarkjs` to be installed globally or via npm.*
+*Note: This process requires global installations of `circom` and `snarkjs` or local availability via the project path.*
 
 ---
 
-##  Environment Setup
+## Environment Configuration
 
-Create a `.env` file in the root directory:
+Initialize the `.env` configuration file from the provided template:
 ```bash
 cp .env.example .env
 ```
 
-Edit the `.env` file with your configuration:
+Define the target RPC provider and wallet parameters:
 ```env
 SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_WALLET_PATH=~/.config/solana/id.json
@@ -59,18 +59,16 @@ RELAYER_URL=http://localhost:3001
 
 ---
 
-##  Network Configuration
+## Network Target Selection
 
-SolVoid supports Localnet, Devnet, and Mainnet.
-
-### Local Development
-To run a local validator with the SolVoid program:
+### Local Development Environment
+To initialize a local validator instance with the SolVoid program:
 ```bash
 anchor localnet
 ```
 
-### Devnet Testing
-Ensure your CLI is set to Devnet and you have some SOL:
+### Devnet Testing Environment
+Configure the Solana CLI for the Devnet cluster and ensure sufficient SOL liquidity:
 ```bash
 solana config set --url devnet
 solana airdrop 2
@@ -78,45 +76,42 @@ solana airdrop 2
 
 ---
 
-##  First Transaction Walkthrough
+## Technical Walkthrough: Primary Privacy Cycle
 
-Follow these steps to complete a full shield-and-withdraw cycle.
+Executing the standard shield-and-withdraw workflow.
 
-### Step 0: Analyze your privacy
-Before shielding, check your current privacy score to see how much metadata you're leaking.
+### Step 0: Privacy Baseline Analysis
+Initialize an audit of the target wallet to establish a baseline Privacy Ghost Score.
 ```bash
-./bin/solvoid ghost <YOUR_WALLET_PUBKEY>
+./bin/solvoid ghost <WALLET_PUBKEY>
 ```
-This will display your **Privacy Ghost Score** and a list of identified privacy leaks.
+The CLI will return the current Ghost Score and identify critical identity linkage vectors.
 
-### Step 1: Shield Assets (Deposit)
-This generates a private commitment and locks your SOL in the SolVoid vault.
+### Step 1: Asset Shielding (Deposit)
+Generates a unique cryptographic commitment and locks SOL in the protocol vault.
 ```bash
 ./bin/solvoid shield 0.5
 ```
-**Output:**
-```
- Shielded 0.5 SOL
-Commitment: 0x4f...a2
-Nullifier: 0x12...9b (SAVE THIS! You need it to withdraw)
-Secret: 0x8a...cc (SAVE THIS! You need it to withdraw)
-```
+**Output Summary:**
+- **Commitment:** 0x... (Publicly registered)
+- **Nullifier Key:** 0x... (Persistence Required)
+- **Secret Key:** 0x... (Persistence Required)
 
-### Step 2: Wait for Confirmations
-Wait for the transaction to be finalized. You can check the status on the SolVoid Dashboard.
+### Step 2: Confirmation Verification
+Monitor the transaction for finality. Verification status is available via the SolVoid Dashboard.
 
-### Step 3: Withdraw (Anonymously)
-Withdraw your funds to a fresh recipient address.
+### Step 3: Unlinkable Withdrawal
+Execute a ZK-verified withdrawal to a fresh, unlinked destination address.
 ```bash
-./bin/solvoid withdraw 0.5 <RECIPIENT_PUBKEY> --nullifier <YOUR_NULLIFIER> --secret <YOUR_SECRET>
+./bin/solvoid withdraw 0.5 <RECIPIENT_PUBKEY> --nullifier <NULLIFIER_KEY> --secret <SECRET_KEY>
 ```
 
 ---
 
-##  Troubleshooting & Common Issues
+## Implementation Troubleshooting
 
-- **"Account not found":** Ensure you have initialized the program state using `anchor run init`.
-- **"Invalid Proof":** Usually caused by a mismatch between the commitment stored on-chain and the one generated during withdrawal. Double-check your secret and nullifier.
-- **"Insufficient Funds":** Ensure the vault has enough balance and you have enough SOL to pay for transaction fees (unless using a relayer).
+- **"Account Not Found":** Verification failed due to missing program state initialization. Ensure `anchor run init` has been successfully executed.
+- **"Invalid Proof":** Metadata mismatch identified. Confirm that the secret and nullifier keys match the initial commitment exactly.
+- **"Insufficient Funds":** Execution blocked by balance constraints. Verify vault liquidity and priority gas availability.
 
-For more detailed issues, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+For advanced remediation, refer to [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).

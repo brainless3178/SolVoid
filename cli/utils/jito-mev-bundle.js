@@ -9,7 +9,6 @@ const {
   Transaction,
   TransactionInstruction,
   Keypair,
-  sendAndConfirmTransaction
   sendAndConfirmTransaction,
   SystemProgram
 } = require('@solana/web3.js');

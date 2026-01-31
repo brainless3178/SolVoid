@@ -24,11 +24,14 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "sdk/**/*.ts",
     "cli/**/*.ts",
+    "relayer/**/*.ts",
     "types/**/*.d.ts"
   ],
   "exclude": [

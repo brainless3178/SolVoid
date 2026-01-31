@@ -19,11 +19,13 @@ export class PoseidonHasher {
 
         try {
             // Build Poseidon instance with parameters matching Rust implementation
+            // circomlibjs buildPoseidon() returns a hash function directly
             this.poseidon = await buildPoseidon();
 
-            // Configure for BN254 field with width=3 (2 inputs + 1 output)
-            // This matches the Rust Poseidon<Bn254, 3> setup
-            await this.poseidon.ready();
+            // Validate that we got a valid Poseidon instance
+            if (typeof this.poseidon !== 'function') {
+                throw new Error('buildPoseidon did not return a valid hash function');
+            }
 
             this.initialized = true;
         } catch (error) {
@@ -42,24 +44,38 @@ export class PoseidonHasher {
 
     /**
      * Convert Buffer to BigInt for Poseidon input
-     * FIXED: Handles little-endian conversion consistently with Rust ark-ff
+     * Uses big-endian (standard hex) to match circom circuits
      */
     private static bufferToBigInt(buffer: Buffer): bigint {
-        // Reverse buffer for little-endian conversion
-        const leBuffer = Buffer.from(buffer).reverse();
-        return BigInt('0x' + leBuffer.toString('hex'));
+        // Big-endian: direct hex conversion (matches circomlib)
+        return BigInt('0x' + buffer.toString('hex'));
     }
 
     /**
-     * Convert BigInt output to Buffer (32 bytes, little-endian)
-     * FIXED: Ensures compatibility with Rust field element format (little-endian)
+     * Convert Poseidon output to Buffer (32 bytes, big-endian)
+     * Uses poseidon.F.toString() to extract the field element value
      */
-    private static bigIntToBuffer(value: bigint): Buffer {
+    private static poseidonOutputToBuffer(output: any): Buffer {
+        // circomlibjs returns a Uint8Array - convert via F.toString()
+        let value: bigint;
+
+        if (output instanceof Uint8Array || Array.isArray(output)) {
+            // Modern circomlibjs returns Uint8Array, use F.toString() to get string representation
+            const strValue = this.poseidon.F.toString(output);
+            value = BigInt(strValue);
+        } else if (typeof output === 'bigint') {
+            value = output;
+        } else if (typeof output === 'string') {
+            value = BigInt(output);
+        } else {
+            throw new Error(`Unexpected Poseidon output type: ${typeof output}`);
+        }
+
         // Convert to hex string and pad to 64 characters (32 bytes)
         const hex = value.toString(16).padStart(64, '0');
 
-        // Convert hex to Buffer and reverse for little-endian
-        const buffer = Buffer.from(hex, 'hex').reverse();
+        // Big-endian: direct hex to Buffer (matches circomlib)
+        const buffer = Buffer.from(hex, 'hex');
 
         // Ensure exactly 32 bytes
         if (buffer.length !== 32) {
@@ -86,7 +102,7 @@ export class PoseidonHasher {
 
         // Matches Rust: sponge.absorb(&l); sponge.absorb(&r); sponge.absorb(&s);
         const resultBigInt = this.poseidon([l, r, s]);
-        return this.bigIntToBuffer(resultBigInt);
+        return this.poseidonOutputToBuffer(resultBigInt);
     }
 
     /**
@@ -104,7 +120,7 @@ export class PoseidonHasher {
 
         // Strict Poseidon(2) for Merkle Tree consistency
         const resultBigInt = this.poseidon([l, r]);
-        return this.bigIntToBuffer(resultBigInt);
+        return this.poseidonOutputToBuffer(resultBigInt);
     }
 
     /**
@@ -115,7 +131,7 @@ export class PoseidonHasher {
         await this.ensureInitialized();
         const n = this.bufferToBigInt(input);
         const resultBigInt = this.poseidon([n, BigInt(1)]);
-        return this.bigIntToBuffer(resultBigInt);
+        return this.poseidonOutputToBuffer(resultBigInt);
     }
 
     /**
@@ -130,7 +146,7 @@ export class PoseidonHasher {
         const a = amount;
 
         const resultBigInt = this.poseidon([s, n, a]);
-        return this.bigIntToBuffer(resultBigInt);
+        return this.poseidonOutputToBuffer(resultBigInt);
     }
 
     /**
@@ -144,7 +160,7 @@ export class PoseidonHasher {
         const salt = BigInt(1);
 
         const resultBigInt = this.poseidon([n, salt]);
-        return this.bigIntToBuffer(resultBigInt);
+        return this.poseidonOutputToBuffer(resultBigInt);
     }
 
     /**

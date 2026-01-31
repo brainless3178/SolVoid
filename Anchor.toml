@@ -15,7 +15,7 @@ solvoid_zk = "Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "https://zk-edge.surfnet.dev:8899"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

@@ -28,11 +28,15 @@ const { buildPoseidon } = require('circomlibjs');
 const fs = require('fs');
 const path = require('path');
 let poseidon;
-const initPoseidons = async () => {
-  const p = await buildPoseidon();
+let poseidonPromise = buildPoseidon().then(p => {
   poseidon = p;
+  return p;
+});
+
+const ensurePoseidon = async () => {
+  if (!poseidon) await poseidonPromise;
+  return poseidon;
 };
-initPoseidons();
 const {
   createRpc,
   LightSystemProgram,
@@ -61,20 +65,21 @@ class MerkleTree {
     this._computeZeros();
   }
 
-  _computeZeros() {
+  async _computeZeros() {
     let zero = BigInt(0);
     this.zeros.push(zero);
 
     for (let i = 0; i < this.levels; i++) {
-      zero = this._poseidonHash([zero, zero]);
+      zero = await this._poseidonHash([zero, zero]);
       this.zeros.push(zero);
     }
   }
 
-  _poseidonHash(inputs) {
-    if (!poseidon) throw new Error("Poseidon not initialized");
+  async _poseidonHash(inputs) {
+    const p = await ensurePoseidon();
     const bigIntInputs = inputs.map(i => typeof i === 'bigint' ? i : BigInt(i));
-    return poseidon(bigIntInputs);
+    const output = p(bigIntInputs);
+    return p.F.toObject(output);
   }
 
   insert(leaf) {
@@ -322,6 +327,13 @@ class ZKPrivacyLayer {
     this.merkleTree = new MerkleTree(CONFIG.MERKLE_TREE_LEVELS);
     this.commitments = new Map();
     this.nullifiers = new Set();
+    this.initialized = false;
+  }
+
+  async init() {
+    if (this.initialized) return;
+    await this.merkleTree._computeZeros();
+    this.initialized = true;
   }
 
   /**
@@ -615,70 +627,9 @@ class ZKPrivacyLayer {
   }
 }
 
-class MerkleTree {
-  constructor(levels) {
-    this.levels = levels;
-    this.tree = [[]];
-    this.nextIndex = 0;
-    this.root = BigInt(0);
-    this.zeros = this._generateZeros();
-  }
 
-  _generateZeros() {
-    const zeros = [BigInt(0)];
-    for (let i = 1; i < this.levels; i++) {
-      zeros.push(this._hash(zeros[i - 1], zeros[i - 1]));
-    }
-    return zeros;
-  }
+// NOTE: MerkleTree class is defined above in the ZK Privacy Layer section (line 54)
 
-  async insert(leaf) {
-    this.tree[0].push(leaf);
-    await this._updateTree();
-    this.nextIndex++;
-  }
-
-  async _updateTree() {
-    for (let level = 0; level < this.levels - 1; level++) {
-      if (!this.tree[level + 1]) this.tree[level + 1] = [];
-
-      const currentLevel = this.tree[level];
-      const nextLevel = this.tree[level + 1];
-
-      for (let i = 0; i < currentLevel.length; i += 2) {
-        const left = currentLevel[i];
-        const right = currentLevel[i + 1] || this.zeros[level];
-        const parent = this._hash(left, right);
-        nextLevel[Math.floor(i / 2)] = parent;
-      }
-    }
-
-    this.root = this.tree[this.levels - 1][0] || this.zeros[this.levels - 1];
-  }
-
-  async getPath(index) {
-    const path = [];
-    const indices = [];
-
-    let currentIndex = index;
-    for (let level = 0; level < this.levels; level++) {
-      const isLeft = currentIndex % 2 === 0;
-      const siblingIndex = isLeft ? currentIndex + 1 : currentIndex - 1;
-
-      const sibling = this.tree[level][siblingIndex] || this.zeros[level];
-      path.push(sibling.toString());
-      indices.push(isLeft ? 0 : 1);
-
-      currentIndex = Math.floor(currentIndex / 2);
-    }
-
-    return { pathElements: path, pathIndices: indices };
-  }
-
-  _hash(left, right) {
-    return poseidon([left, right]);
-  }
-}
 
 // ============================================================================
 // PHASE 4: COMPLETE SPL TOKEN TRANSFER ENGINE
@@ -831,6 +782,10 @@ class AtomicRescueEngine {
     this.jitoEngine = new JitoMEVBundle();
     this.bridge = null; // Lazy loaded later
     this.initializeConnection();
+  }
+
+  async init() {
+    await this.zkLayer.init();
   }
 
   initializeConnection() {

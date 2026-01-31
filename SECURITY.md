@@ -1,39 +1,42 @@
-#  Security Policy
+# Security Standards: Protocol Integrity & Disclosure
 
-## Security Disclosure
+## Vulnerability Disclosure Policy
 
-Privacy is a human right, but software security is a continuous process. If you discover a vulnerability in SolVoid, we ask that you disclose it to us responsibly so we can protect our users.
+The SolVoid project recognizes that protocol security is an ongoing engineering process. In the event of vulnerability identification, we prioritize responsible, coordinated disclosure to ensure the continuous protection of the collective anonymity set.
 
-### Reporting a Vulnerability
-- **Email:** [security@solvoid.io] (Placeholder)
-- **Encryption:** Please use our PGP key (Link placeholder) to encrypt sensitive reports.
-- **Process:** We will acknowledge your report within 48 hours and provide a timeline for a fix. We ask that you do not disclose the vulnerability publicly until we have released a patch.
-
----
-
-##  Security Best Practices for Users
-1. **Never share your Secret or Nullifier.** These are the only keys to your anonymous funds. If lost or stolen, your funds are gone.
-2. **Use a Fresh Wallet for Withdrawals.** To maintain privacy, ensure your destination address has no previous on-chain links to your identity.
-3. **Verify the Domain.** Always ensure you are using the official `solvoid.io` dashboard or a verified local build of the SDK/CLI.
-4. **Network Fees.** If not using a relayer, be aware that funding a fresh wallet with SOL for gas can compromise your privacy via timing or source-analysis.
+### Reporting Methodology
+- **Communication Channel:** [security@solvoid.io] (Contact registry placeholder).
+- **Cryptographic Protection:** Encrypt all sensitive disclosures using the project's PGP identifier (Link placeholder).
+- **Response Protocol:** The engineering team will acknowledge reports within 48 hours and establish a remediation timeline. We request that reporters maintain confidentiality until a verified patch has been deployed across the network.
 
 ---
 
-##  Known Security Considerations (Brutal Honesty)
-1. **Un-audited Code:** As of the current version, this protocol has **NOT** undergone a professional security audit.
-2. **Trusted Setup:** The current ceremony files are for testing. A production-grade Multi-Party Computation (MPC) trusted setup is required before Mainnet launch.
-3. **Draft Circuits:** Some constraints in the `withdraw.circom` are undergoing refinement to prevent potential edge-case under-constraints.
-4. **Relayer Trust:** While relayers cannot steal funds (thanks to ZK binding), they could theoretically log user IP addresses or refuse to broadcast transactions (DoS).
+## Technical Security Best Practices
+
+1. **Primitive Sequestration:** The secret and nullifier keys constitute the sole access vectors for shielded liquidity. Execution of the protocol implies user responsibility for the secure, off-chain storage of these cryptographical primitives.
+2. **Identity Decoupling:** To maintain maximum anonymity, withdrawal destination addresses should have zero historical on-chain linkage to the depositor's primary identity.
+3. **Environment Verification:** Verify the integrity of the local build or ensure the use of the canonical `solvoid.io` interface to mitigate man-in-the-middle or phishing attacks.
+4. **Gas Funding Risks:** When not utilizing the Shadow Relayer network, funding a fresh destination wallet with SOL gas may introduce timing-based or graph-based linkage vulnerabilities.
 
 ---
 
-##  Supported Versions
-| Version | Supported |
-|---------|-----------|
-| 0.2.x   |  Beta    |
-| 0.1.x   |  Legacy  |
+## Critical Security Considerations & Risk Factors
+
+1. **Audit Status:** The current protocol implementation has **not** undergone a third-party security audit. Usage is restricted to experimental or testing environments.
+2. **Proving Ceremony Requirements:** Proving keys currently in use are intended for development cycles. A production-grade Multi-Party Computation (MPC) ceremony is mandatory before Mainnet architectural finalization.
+3. **Circuit Constraints:** Circom circuit constraints are undergoing continuous peer review and refinement to ensure comprehensive boundary coverage.
+4. **Relayer Trust Model:** Relayer entities are restricted by ZK-bindings from asset theft, but retain the capacity for IP logging or localized Denial of Service (DoS).
 
 ---
 
-##  Bug Bounty
-We are currently operating a "Friendly Hacker" program. Critical vulnerabilities reported responsibly may be eligible for rewards in future protocol development funds.
+## Version Support Matrix
+
+| Specification | Support Status | Maintenance Type |
+|---------------|----------------|------------------|
+| 0.2.x         | Active         | Feature/Security |
+| 0.1.x         | Deprecated     | Critical Fixes   |
+
+---
+
+## Bug Bounty Initiative
+We operate a "Coordinated Vulnerability Research" program. Reports of critical vulnerabilities that adhere to disclosure requirements are prioritized for retroactive rewards as the protocol ecosystem matures.

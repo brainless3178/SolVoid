@@ -118,7 +118,7 @@ export default function Home() {
   // Handle shield operation
   const handleShield = async () => {
     if (!publicKey || !balanceSOL || balanceSOL <= 0) {
-      showError('Insufficient Balance', 'You need SOL to shield your transactions.');
+      showError('Insufficient Balance', 'Requirement: Sufficient SOL balance for shielding execution.');
       return;
     }
 
@@ -127,18 +127,18 @@ export default function Home() {
       const result = await solVoidData?.shield?.(amountLamports);
 
       if (result) {
-        info('Shield Operation Started', 'Your privacy shield is being generated. Check console for details.');
+        info('Shield Operation Started', 'Remediation active: Privacy shield generation initiated. Refer to telemetry for status.');
       }
     } catch (error) {
       console.error('Shield operation failed:', error);
-      showError('Shield Error', 'Failed to initiate shield operation. Please try again.');
+      showError('Shield Error', 'Execution Failed: Shield operation initialization rejected.');
     }
   };
 
   // Handle withdrawal
   const handleWithdraw = async () => {
     if (!withdrawSecret || !withdrawNullifier || !withdrawRecipient || !withdrawAmount) {
-      showError('Missing Data', 'Please fill in all withdrawal fields.');
+      showError('Missing Parameters', 'Requirement: All withdrawal parameters must be specified for proof generation.');
       return;
     }
 

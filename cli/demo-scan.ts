@@ -4,171 +4,73 @@
  * SolVoid Demo Privacy Scanner - Mock Data Version
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import * as dotenv from 'dotenv';
+import { PrivacyEngine } from '../sdk/privacy-engine';
+import { Leak } from '../sdk/types';
 
 dotenv.config();
+
+const connection = new Connection(process.env.RPC_URL || 'https://api.mainnet-beta.solana.com', 'confirmed');
+const engine = new PrivacyEngine();
 
 interface PrivacyScore {
     score: number;
     riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-    breakdown: {
-        transactionPattern: number;
-        timingAnalysis: number;
-        amountDistribution: number;
-        networkBehavior: number;
-    };
-    recommendations: string[];
+    leaks: Leak[];
     totalTransactions: number;
-    uniqueRecipients: number;
-    averageAmount: number;
+    scannedAt: number;
 }
 
-class DemoPrivacyScanner {
-    private mockData: Map<string, PrivacyScore> = new Map();
-
-    constructor() {
-        this.initializeMockData();
-    }
-
-    private initializeMockData() {
-        // Mock data for common addresses
-        this.mockData.set('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM', {
-            score: 85,
-            riskLevel: 'LOW',
-            breakdown: {
-                transactionPattern: 90,
-                timingAnalysis: 80,
-                amountDistribution: 85,
-                networkBehavior: 85
-            },
-            recommendations: [
-                'Privacy practices look good - maintain current patterns',
-                'Consider using shielded transactions for enhanced privacy'
-            ],
-            totalTransactions: 1247,
-            uniqueRecipients: 89,
-            averageAmount: 2500000
-        });
-
-        this.mockData.set('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', {
-            score: 45,
-            riskLevel: 'HIGH',
-            breakdown: {
-                transactionPattern: 30,
-                timingAnalysis: 50,
-                amountDistribution: 40,
-                networkBehavior: 60
-            },
-            recommendations: [
-                'Consider diversifying transaction recipients to improve privacy',
-                'Vary transaction timing to avoid predictable patterns',
-                'Use varied transaction amounts to break patterns',
-                'Consider using privacy tools like mixers or shielded transactions'
-            ],
-            totalTransactions: 3421,
-            uniqueRecipients: 12,
-            averageAmount: 10000000
-        });
-
-        this.mockData.set('So11111111111111111111111111111111111111112', {
-            score: 72,
-            riskLevel: 'MEDIUM',
-            breakdown: {
-                transactionPattern: 75,
-                timingAnalysis: 70,
-                amountDistribution: 65,
-                networkBehavior: 80
-            },
-            recommendations: [
-                'Interact with more diverse programs to improve privacy',
-                'Consider using shielded transactions for enhanced privacy'
-            ],
-            totalTransactions: 8934,
-            uniqueRecipients: 45,
-            averageAmount: 5000000
-        });
-    }
-
+class RealPrivacyScanner {
     async analyzeAddress(address: string): Promise<PrivacyScore> {
         try {
-            // Validate address
-            new PublicKey(address);
-            
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const pubkey = new PublicKey(address);
 
-            // Return mock data or generate random score
-            if (this.mockData.has(address)) {
-                return this.mockData.get(address)!;
+            // 1. Fetch real transaction signatures
+            const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 10 });
+
+            let allLeaks: Leak[] = [];
+
+            // 2. Deep Inspect each transaction (Real data)
+            for (const sigInfo of signatures) {
+                const tx = await connection.getTransaction(sigInfo.signature, {
+                    maxSupportedTransactionVersion: 0,
+                    commitment: 'confirmed'
+                });
+
+                if (tx) {
+                    // Convert to format engine expects
+                    const txJson: any = {
+                        message: tx.transaction.message,
+                        meta: tx.meta,
+                        signatures: tx.transaction.signatures
+                    };
+                    const leaks = engine.analyzeTransaction(txJson);
+                    allLeaks = [...allLeaks, ...leaks];
+                }
             }
 
-            // Generate random score for unknown addresses
-            return this.generateRandomScore(address);
+            const score = engine.calculateScore(allLeaks);
+            const riskLevel = score >= 80 ? 'LOW' : score >= 60 ? 'MEDIUM' : 'HIGH';
+
+            return {
+                score,
+                riskLevel,
+                leaks: allLeaks,
+                totalTransactions: signatures.length,
+                scannedAt: Date.now()
+            };
         } catch (error) {
-            console.error('Error analyzing address:', error);
+            console.error(' [ERROR] Real scan failed:', error);
             throw error;
         }
-    }
-
-    private generateRandomScore(address: string): PrivacyScore {
-        const score = Math.floor(Math.random() * 40) + 60; // 60-100 range
-        const riskLevel = score >= 80 ? 'LOW' : score >= 65 ? 'MEDIUM' : 'HIGH';
-        
-        const breakdown = {
-            transactionPattern: Math.floor(Math.random() * 30) + 70,
-            timingAnalysis: Math.floor(Math.random() * 30) + 70,
-            amountDistribution: Math.floor(Math.random() * 30) + 70,
-            networkBehavior: Math.floor(Math.random() * 30) + 70
-        };
-
-        const recommendations = this.generateRecommendations(score, breakdown);
-
-        return {
-            score,
-            riskLevel,
-            breakdown,
-            recommendations,
-            totalTransactions: Math.floor(Math.random() * 5000) + 100,
-            uniqueRecipients: Math.floor(Math.random() * 50) + 5,
-            averageAmount: Math.floor(Math.random() * 10000000) + 1000000
-        };
-    }
-
-    private generateRecommendations(score: number, breakdown: any): string[] {
-        const recommendations: string[] = [];
-
-        if (breakdown.transactionPattern < 80) {
-            recommendations.push('Consider diversifying transaction recipients to improve privacy');
-        }
-
-        if (breakdown.timingAnalysis < 80) {
-            recommendations.push('Vary transaction timing to avoid predictable patterns');
-        }
-
-        if (breakdown.amountDistribution < 80) {
-            recommendations.push('Use varied transaction amounts to break patterns');
-        }
-
-        if (breakdown.networkBehavior < 80) {
-            recommendations.push('Interact with more diverse programs to improve privacy');
-        }
-
-        if (score < 70) {
-            recommendations.push('Consider using privacy tools like mixers or shielded transactions');
-        }
-
-        if (recommendations.length === 0) {
-            recommendations.push('Privacy practices look good - maintain current patterns');
-        }
-
-        return recommendations;
     }
 }
 
 async function main() {
     const args = process.argv.slice(2);
-    
+
     if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
         console.log(`
  SolVoid Privacy Scanner - Demo Version
@@ -199,27 +101,23 @@ Examples:
         console.log(` Using demo data (mock analysis)`);
         console.log('');
 
-        const scanner = new DemoPrivacyScanner();
+        const scanner = new RealPrivacyScanner();
         const result = await scanner.analyzeAddress(address);
 
         console.log(` Privacy Score: ${result.score}/100`);
         console.log(`  Risk Level: ${result.riskLevel}`);
+        console.log(`  Transactions Scanned: ${result.totalTransactions}`);
         console.log('');
-        console.log(' Score Breakdown:');
-        console.log(`  Transaction Pattern: ${result.breakdown.transactionPattern}%`);
-        console.log(`  Timing Analysis: ${result.breakdown.timingAnalysis}%`);
-        console.log(`  Amount Distribution: ${result.breakdown.amountDistribution}%`);
-        console.log(`  Network Behavior: ${result.breakdown.networkBehavior}%`);
-        console.log('');
-        console.log(' Transaction Statistics:');
-        console.log(`  Total Transactions: ${result.totalTransactions.toLocaleString()}`);
-        console.log(`  Unique Recipients: ${result.uniqueRecipients}`);
-        console.log(`  Average Amount: ${(result.averageAmount / 1000000).toFixed(2)} SOL`);
-        console.log('');
-        console.log(' Recommendations:');
-        result.recommendations.forEach(rec => {
-            console.log(`  • ${rec}`);
-        });
+
+        if (result.leaks.length > 0) {
+            console.log(' Detected Privacy Leaks:');
+            result.leaks.forEach(leak => {
+                console.log(`  [${leak.severity}] ${leak.type.toUpperCase()}: ${leak.description}`);
+                if (leak.remediation) console.log(`    Remediation: ${leak.remediation}`);
+            });
+        } else {
+            console.log(' No immediate privacy leaks identified in recent history.');
+        }
 
     } catch (error) {
         console.error(' Error:', error instanceof Error ? error.message : 'Unknown error');
@@ -228,7 +126,7 @@ Examples:
 }
 
 async function runDemo() {
-    const scanner = new DemoPrivacyScanner();
+    const scanner = new RealPrivacyScanner();
     const addresses = [
         '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
         'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -241,10 +139,10 @@ async function runDemo() {
 
     for (const address of addresses) {
         console.log(` Analyzing: ${address.slice(0, 8)}...${address.slice(-8)}`);
-        
+
         const spinner = ['', '', '', '', '', '', '', '', '', ''];
         let i = 0;
-        
+
         const interval = setInterval(() => {
             process.stdout.write(`\r${spinner[i]} Scanning transactions...`);
             i = (i + 1) % spinner.length;
@@ -257,7 +155,7 @@ async function runDemo() {
         console.log(` Privacy Score: ${result.score}/100 (${result.riskLevel})`);
         console.log(` ${result.totalTransactions.toLocaleString()} transactions analyzed`);
         console.log('');
-        
+
         await new Promise(resolve => setTimeout(resolve, 500));
     }
 

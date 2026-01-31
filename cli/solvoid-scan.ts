@@ -1,7 +1,8 @@
-#!/usr/bin/env node
+#!/usr/bin/node
 
 /**
- * SolVoid CLI
+ * SolVoid CLI: Primary command-line interface for the protocol.
+ * Orchestrates user interactions with our SDK, Relayer, and ZK proving pipeline.
  */
 
 import { PublicKey, Keypair, Connection } from '@solana/web3.js';
@@ -22,6 +23,9 @@ const CLI_METADATA = {
     owner: 'CLI User'
 };
 
+/**
+ * Registry for protocol administration and emergency control functions.
+ */
 function registerAdminCommand(program: Command, client: SolVoidClient) {
     const admin = program.command('admin').description('Protocol Administration & Emergency Controls');
 
@@ -31,7 +35,7 @@ function registerAdminCommand(program: Command, client: SolVoidClient) {
         .argument('<multiplier>', 'Fee multiplier (1-10)')
         .argument('<reason>', 'Reason for emergency')
         .action(async (multiplier, reason) => {
-            console.log(`Triggering emergency mode (x${multiplier}) for: ${reason}`);
+            console.log(`Triggering emergency status (Multiplier: x${multiplier}) for: ${reason}`);
             const tx = await client.triggerEmergencyMode(BigInt(multiplier), reason);
             console.log(`Emergency mode active. Signature: ${tx}`);
         });
@@ -51,7 +55,7 @@ function registerAdminCommand(program: Command, client: SolVoidClient) {
         .action(async () => {
             console.log('Triggering Circuit Breaker...');
             const tx = await client.triggerCircuitBreaker();
-            console.log(`Protocol PAUSED. Signature: ${tx}`);
+            console.log(`Protocol state: PAUSED. Signature: ${tx}`);
         });
 
     admin
@@ -60,7 +64,7 @@ function registerAdminCommand(program: Command, client: SolVoidClient) {
         .action(async () => {
             console.log('Resetting Circuit Breaker...');
             const tx = await client.resetCircuitBreaker();
-            console.log(`Protocol RESUMED. Signature: ${tx}`);
+            console.log(`Protocol state: RESUMED. Signature: ${tx}`);
         });
 }
 
@@ -73,11 +77,11 @@ async function main() {
 SolVoid: The Digital Fortress for Solana
 
 Commands:
-  protect <address>    Scan address for leaks and view Privacy Passport
-  rescue <address>     Atomic shielding of all leaked assets
+  protect <address>    Execute a comprehensive privacy leak audit
+  rescue <address>     Initiate atomic asset recovery for compromised wallets
   shield <amount>      Execute a private deposit (Surgical Shielding)
-  withdraw <secret> <nullifier> <recipient>   Unlinkable ZK withdrawal
-  ghost <address>      Calculate Privacy Ghost Score
+  withdraw <secret> <nullifier> <recipient>   Execute an unlinkable ZK withdrawal
+  ghost <address>      Calculate decentralized Privacy Ghost Score
 `);
         process.exit(0);
     }
@@ -98,12 +102,15 @@ Commands:
         return;
     }
 
+    /**
+     * Environment-driven configuration initialization with fallback values.
+     */
     const rpcUrl = args.includes('--rpc') ? args[args.indexOf('--rpc') + 1] : (process.env.RPC_URL || 'https://api.mainnet-beta.solana.com');
     const programId = args.includes('--program') ? args[args.indexOf('--program') + 1] : (process.env.PROGRAM_ID || 'Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i');
     const relayerUrl = args.includes('--relayer') ? args[args.indexOf('--relayer') + 1] : (process.env.SHADOW_RELAYER_URL || 'http://localhost:3000');
 
-    // Rule 10: Validate Config Boundary
-    if (!rpcUrl || !programId) throw new Error("Missing required configuration (RPC_URL or PROGRAM_ID)");
+    /** Node-side configuration boundary enforcement. */
+    if (!rpcUrl || !programId) throw new Error("Configuration Error: Missing RPC_URL or PROGRAM_ID environment variables.");
 
     const wallet = Keypair.generate();
     const config = {
@@ -116,12 +123,12 @@ Commands:
     const program = new Command();
     program.name('solvoid-scan').description('SolVoid Digital Fortress CLI');
 
-    // Add global options for usage by subcommands
-    program.option('--rpc <url>', 'Solana RPC URL', rpcUrl);
-    program.option('--program <id>', 'SolVoid Program ID', programId);
-    program.option('--relayer <url>', 'Shadow Relayer URL', relayerUrl);
+    /** Global CLI option registration. */
+    program.option('--rpc <url>', 'Override specified Solana RPC URL', rpcUrl);
+    program.option('--program <id>', 'Override target SolVoid Program ID', programId);
+    program.option('--relayer <url>', 'Override target Shadow Relayer URL', relayerUrl);
 
-    // Register modular commands
+    /** Modular subcommand orchestration. */
     registerGhostCommand(program);
     registerRescueCommand(program);
     registerAdminCommand(program, client);
@@ -135,25 +142,25 @@ Commands:
         switch (command) {
             case 'protect': {
                 const rawAddress = args[1];
-                if (!rawAddress) throw new Error("Missing address");
+                if (!rawAddress) throw new Error("Argument Error: Target address is required.");
 
-                // Boundary Enforcement: CLI -> Logic (Rule 10)
+                /** Parameter validation: CLI-to-SDK boundary enforcement. */
                 const enforcedAddr = enforce(PublicKeySchema, rawAddress, CLI_METADATA);
                 const address = new PublicKey(enforcedAddr.value);
 
-                console.log(`\nScanning ${address.toBase58()}...`);
+                console.log(`\nInitiating privacy audit for ${address.toBase58()}...`);
 
                 const passport = await client.getPassport(address.toBase58());
                 const results = await client.protect(address);
 
                 console.log(`\n--- PRIVACY PASSPORT ---`);
                 const scoreColor = passport.overallScore < 50 ? '\x1b[31m' : passport.overallScore < 80 ? '\x1b[33m' : '\x1b[32m';
-                console.log(`Overall Score: ${scoreColor}${passport.overallScore}/100\x1b[0m`);
-                console.log(`Badges: ${passport.badges.map(b => b.icon + ' ' + b.name).join(', ') || 'None'}`);
+                console.log(`Overall Privacy Score: ${scoreColor}${passport.overallScore}/100\x1b[0m`);
+                console.log(`Attained Badges: ${passport.badges.map(b => b.icon + ' ' + b.name).join(', ') || 'None'}`);
 
                 results.forEach((res) => {
                     console.log(`\n---------------------------------------------------------`);
-                    console.log(`Signature: ${res.signature}`);
+                    console.log(`Audit Signature: ${res.signature}`);
                     if (res.leaks.length > 0) {
                         res.leaks.forEach((leak) => {
                             const sevColor = leak.severity === 'CRITICAL' ? '\x1b[31m' : '\x1b[33m';
@@ -166,18 +173,17 @@ Commands:
 
             case 'rescue': {
                 const rawAddress = args[1];
-                if (!rawAddress) throw new Error("Missing address");
+                if (!rawAddress) throw new Error("Argument Error: Target address is required.");
 
                 const enforcedAddr = enforce(PublicKeySchema, rawAddress, CLI_METADATA);
                 const address = new PublicKey(enforcedAddr.value);
 
-                console.log(`\nExecuting rescue for: ${address.toBase58()}`);
+                console.log(`\nExecuting recovery analysis for: ${address.toBase58()}`);
                 const result = await client.rescue(address);
 
                 if (result.status === 'analysis_complete') {
-                    console.log(`\nRescue analysis complete.`);
-                    console.log(`Leaks found: ${result.leakCount}`);
-                    console.log(`Current Score: ${result.currentScore} -> Potential: ${result.potentialScore}`);
+                    console.log(`\nAnalysis Result: Detected ${result.leakCount} leak vectors.`);
+                    console.log(`Current Score: ${result.currentScore} -> Remediation Potential: ${result.potentialScore}`);
                 } else {
                     console.log(`\n${result.message}`);
                 }
@@ -186,21 +192,21 @@ Commands:
 
             case 'shield': {
                 const amountSolRaw = args[1];
-                if (!amountSolRaw) throw new Error("Missing amount");
+                if (!amountSolRaw) throw new Error("Argument Error: Shielding amount is required.");
 
                 const amountSol = parseFloat(amountSolRaw);
-                if (isNaN(amountSol) || amountSol <= 0) throw new Error("Invalid amount");
+                if (isNaN(amountSol) || amountSol <= 0) throw new Error("Precision Error: Invalid SOL amount.");
 
-                // Rule 6: Explicit Transformation - SOL to LAMPORT
+                /** Unit transformation: SOL to atomic Lamports for protocol precision. */
                 const amountLamports = Math.floor(amountSol * 1_000_000_000);
 
-                console.log(`Shielding ${amountSol} SOL (${amountLamports} Lamports)...`);
+                console.log(`Executing surgical shield for ${amountSol} SOL (${amountLamports} Lamports)...`);
                 const { commitmentData } = await client.shield(amountLamports);
 
-                console.log('\n--- SAVE THESE SECRETS ---');
-                console.log('Secret:', commitmentData.secret);
-                console.log('Nullifier:', commitmentData.nullifier);
-                console.log('Commitment:', commitmentData.commitmentHex);
+                console.log('\n--- CRYPTOGRAPHIC SECRETS (EXTREMELY SENSITIVE) ---');
+                console.log('Secret Key:', commitmentData.secret);
+                console.log('Nullifier Key:', commitmentData.nullifier);
+                console.log('Commitment Hash:', commitmentData.commitmentHex);
                 break;
             }
 
@@ -210,45 +216,47 @@ Commands:
                 const rawRecipient = args[3];
                 const amountRaw = args[4];
 
-                if (!secret || !nullifier || !rawRecipient || !amountRaw) throw new Error("Missing withdrawal params");
+                if (!secret || !nullifier || !rawRecipient || !amountRaw) throw new Error("Argument Error: All withdrawal primitives are required.");
 
                 const enforcedRecipient = enforce(PublicKeySchema, rawRecipient, CLI_METADATA);
                 const recipient = enforcedRecipient.value;
                 const amount = BigInt(Math.floor(parseFloat(amountRaw) * 1_000_000_000));
 
-                console.log(`Preparing withdrawal of ${amountRaw} SOL to ${recipient}...`);
+                console.log(`Preparing ZK witness for ${amountRaw} SOL withdrawal to ${recipient}...`);
 
-                console.log(`Fetching commitments from: ${relayerUrl}...`);
+                /** State synchronization: Retrieving commitment tree from relay network. */
                 const response = await fetch(`${relayerUrl}/commitments`);
-                if (!response.ok) throw new Error(`Relayer error: ${response.statusText}`);
+                if (!response.ok) throw new Error(`Relay Failure: ${response.statusText}`);
 
                 const data = (await response.json()) as { commitments: string[] };
                 const commitmentsHex = data.commitments;
 
-                console.log(`Generating ZK proof...`);
+                /** Groth16 Prover initialization using standardized artifacts. */
+                const wasmPath = process.env.ZK_WASM_PATH || './circuits/withdraw_js/withdraw.wasm';
+                const zkeyPath = process.env.ZK_ZKEY_PATH || './circuits/build/withdraw_final.zkey';
                 const result = await client.prepareWithdrawal(
                     secret,
                     nullifier,
                     amount,
                     new PublicKey(recipient),
                     commitmentsHex,
-                    './withdraw.wasm',
-                    './withdraw.zkey'
+                    wasmPath,
+                    zkeyPath
                 );
 
-                console.log('\nWithdrawal Proof Ready:');
+                console.log('\nZK Withdrawal Proof Successfully Generated:');
                 console.log('Nullifier Hash:', result.nullifierHash);
-                console.log('Root:', result.root);
-                console.log('Proof Size:', result.proof.length, 'bytes');
+                console.log('Root Hash:', result.root);
+                console.log('Proof Wire Format:', JSON.stringify(result.proof, null, 2));
                 break;
             }
 
             default:
-                console.error(`Unknown command: ${command}`);
+                console.error(`Execution Error: Unknown command identifier '${command}'`);
                 process.exit(1);
         }
     } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
+        const msg = e instanceof Error ? e.message : 'Critical Execution Failure';
         console.error('\x1b[31mError:\x1b[0m', msg);
         process.exit(1);
     }

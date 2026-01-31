@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   authors: [{ name: "SolVoid Team" }],
   openGraph: {
     title: "SolVoid | Privacy Infrastructure",
-    description: "Protect your Solana wallet with ZK-proof privacy shielding",
+    description: "Implementation of ZK-proof privacy shielding and anonymity recovery for the Solana ecosystem.",
     type: "website",
   },
 };

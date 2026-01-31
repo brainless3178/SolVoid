@@ -1,0 +1,460 @@
+{
+    "version": "0.1.0",
+    "name": "solvoid_zk",
+    "address": "3QcKRYWquzbBR3UpKeh4aKVCSpoHy89UT8gyovzRzzan",
+    "instructions": [
+        {
+            "name": "initialize",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "vault",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "authority",
+                    "type": "pubkey"
+                }
+            ]
+        },
+        {
+            "name": "initializeVerifier",
+            "accounts": [
+                {
+                    "name": "verifierState",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "vk",
+                    "type": {
+                        "defined": "VerificationKeyData"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "initializeRootHistory",
+            "accounts": [
+                {
+                    "name": "rootHistory",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "initializeEconomics",
+            "accounts": [
+                {
+                    "name": "economicState",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "deposit",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "rootHistory",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "depositor",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "vault",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "commitment",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "withdraw",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "vault",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "recipient",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "relayer",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "protocolFeeAccumulator",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "verifierState",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "rootHistory",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "nullifierAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "economicState",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "proof",
+                    "type": {
+                        "defined": "ProofData"
+                    }
+                },
+                {
+                    "name": "root",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
+                },
+                {
+                    "name": "nullifierHash",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
+                },
+                {
+                    "name": "recipient",
+                    "type": "pubkey"
+                },
+                {
+                    "name": "relayer",
+                    "type": "pubkey"
+                },
+                {
+                    "name": "fee",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        }
+    ],
+    "types": [
+        {
+            "name": "ProofData",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "proofAG1",
+                        "type": {
+                            "array": [
+                                "u8",
+                                64
+                            ]
+                        }
+                    },
+                    {
+                        "name": "proofBG2",
+                        "type": {
+                            "array": [
+                                "u8",
+                                128
+                            ]
+                        }
+                    },
+                    {
+                        "name": "proofCG1",
+                        "type": {
+                            "array": [
+                                "u8",
+                                64
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VerificationKeyData",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "alphaG1",
+                        "type": {
+                            "array": [
+                                "u8",
+                                64
+                            ]
+                        }
+                    },
+                    {
+                        "name": "betaG2",
+                        "type": {
+                            "array": [
+                                "u8",
+                                128
+                            ]
+                        }
+                    },
+                    {
+                        "name": "gammaG2",
+                        "type": {
+                            "array": [
+                                "u8",
+                                128
+                            ]
+                        }
+                    },
+                    {
+                        "name": "deltaG2",
+                        "type": {
+                            "array": [
+                                "u8",
+                                128
+                            ]
+                        }
+                    },
+                    {
+                        "name": "icG1",
+                        "type": {
+                            "vec": {
+                                "array": [
+                                    "u8",
+                                    64
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "accounts": [
+        {
+            "name": "ProgramState",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "authority",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "merkleRoot",
+                        "type": {
+                            "array": [
+                                "u8",
+                                32
+                            ]
+                        }
+                    },
+                    {
+                        "name": "leafCount",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "filledSubtrees",
+                        "type": {
+                            "array": [
+                                {
+                                    "array": [
+                                        "u8",
+                                        32
+                                    ]
+                                },
+                                20
+                            ]
+                        }
+                    },
+                    {
+                        "name": "isInitialized",
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RootHistory",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "roots",
+                        "type": {
+                            "array": [
+                                {
+                                    "array": [
+                                        "u8",
+                                        32
+                                    ]
+                                },
+                                100
+                            ]
+                        }
+                    },
+                    {
+                        "name": "currentIndex",
+                        "type": "u64"
+                    }
+                ]
+            }
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "RecipientMismatch",
+            "msg": "Recipient address does not match proof"
+        },
+        {
+            "code": 6001,
+            "name": "RelayerMismatch",
+            "msg": "Relayer address does not match proof"
+        },
+        {
+            "code": 6002,
+            "name": "InvalidProof",
+            "msg": "Invalid ZK proof"
+        },
+        {
+            "code": 6003,
+            "name": "NullifierAlreadyUsed",
+            "msg": "Nullifier has already been used"
+        },
+        {
+            "code": 6004,
+            "name": "InsufficientVaultBalance",
+            "msg": "Vault has insufficient balance"
+        },
+        {
+            "code": 6005,
+            "name": "DepositTooSmall",
+            "msg": "Deposit amount too small"
+        },
+        {
+            "code": 6006,
+            "name": "DepositTooLarge",
+            "msg": "Deposit amount too large"
+        },
+        {
+            "code": 6007,
+            "name": "InvalidRoot",
+            "msg": "Invalid Merkle root"
+        }
+    ]
+}

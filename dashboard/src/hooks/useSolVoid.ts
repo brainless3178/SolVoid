@@ -158,6 +158,23 @@ export const useSolVoid = (overrideProgramId?: string) => {
             const rescueData = await response.json();
             console.log("Rescue data received:", rescueData);
 
+            if (rescueData.transaction) {
+                console.log("Signing rescue transaction...");
+                const txBuffer = Buffer.from(rescueData.transaction, 'base64');
+                const transaction = Transaction.from(txBuffer);
+
+                // Request wallet to sign
+                const signedTx = await wallet.signTransaction!(transaction);
+
+                // Send signed transaction
+                const txid = await connection.sendRawTransaction(signedTx.serialize());
+                console.log("Rescue transaction sent:", txid);
+
+                // Wait for confirmation
+                await connection.confirmTransaction(txid, 'confirmed');
+                rescueData.txid = txid;
+            }
+
             // Refresh scan data after rescue to show updated state
             await scanAddress(publicKey.toBase58());
             return rescueData;

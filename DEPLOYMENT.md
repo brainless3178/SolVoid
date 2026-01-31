@@ -1,62 +1,62 @@
-#  Deployment Guide
+# Deployment Infrastructure: Component Orchestration
 
-This guide covers the deployment of all SolVoid components: Smart Contracts, Dashboard, and Relayer.
+This document specifies the requirements and procedures for deploying protocol components across the on-chain, interface, and relay layers.
 
 ---
 
-##  Smart Contract (Solana Program)
+## On-Chain Logic (Solana Program)
 
 ### Prerequisites
-- Solana CLI configured for the target network (Devnet/Mainnet).
-- A wallet with sufficient SOL for deployment fees.
+- Solana Tool Suite initialized for the target cluster (Devnet/Mainnet).
+- Authorized deployment wallet with sufficient SOL liquidity for rent and execution fees.
 
-### Steps
-1. **Build the program:**
+### Procedures
+1. **Source Compilation:**
    ```bash
    anchor build
    ```
-2. **Deploy:**
+2. **Cluster Deployment:**
    ```bash
    anchor deploy --provider.cluster <NETWORK>
    ```
-3. **Initialize the state:**
+3. **State Initialization:**
    ```bash
    solvoid init --authority <PUBKEY>
    ```
 
 ---
 
-##  Dashboard (Vercel/Netlify)
+## User Interface (Dashboard)
 
-The dashboard is a Next.js application designed to be deployed to Vercel or Netlify.
+The Dashboard utilizes the Next.js framework and is optimized for deployment on Vercel or Netlify.
 
-### Environment Variables
-Set the following on your deployment platform:
-- `NEXT_PUBLIC_RPC_URL`: Your Solana RPC endpoint.
-- `NEXT_PUBLIC_PROGRAM_ID`: The deployed SolVoid program ID.
+### Environment Configuration
+The following environment variables must be configured on the hosting platform:
+- `NEXT_PUBLIC_RPC_URL`: Primary Solana JSON-RPC endpoint.
+- `NEXT_PUBLIC_PROGRAM_ID`: Canonical SolVoid Program ID.
 
-### Commands
+### Build and Execution
 ```bash
-# Build
+# Production Build
 npm run build
 
-# Start
+# Service Start
 npm run start
 ```
 
 ---
 
-##  Relayer (Node.js/Docker)
+## Shadow Relayer (Node.js/Containerized)
 
-The relayer should be deployed to a server with high availability.
+Relayer instances require a high-availability environment to ensure protocol responsiveness.
 
-### Docker Deployment (Recommended)
+### Containerized Deployment (Recommended)
 ```bash
 docker build -t solvoid-relayer ./relayer
 docker run -p 3001:3001 --env-file .env solvoid-relayer
 ```
 
-### Manual Deployment
+### Direct Service Orchestration
 ```bash
 cd relayer
 npm install
@@ -66,24 +66,23 @@ pm2 start dist/index.js --name solvoid-relayer
 
 ---
 
-##  CI/CD Pipeline
+## CI/CD Pipeline Integration
 
-We use GitHub Actions for automated deployment.
-- **Main Branch:** Triggers deployment to Staging/Devnet.
-- **Releases:** Trigger deployment to Production/Mainnet.
+Automated CI/CD orchestration is facilitated via GitHub Actions.
+- **Main Branch Integration:** Triggers automated deployment to the Staging/Devnet environment.
+- **Release Tagging:** Triggers production deployment to the Mainnet environment.
 
-For details, see [CI_CD.md](./CI_CD.md).
+For implementation details, refer to [CICD_REFERENCE.md](./CICD_REFERENCE.md).
 
 ---
 
-##  Rollback Procedures
+## Protocol Rollback Procedures
 
-### Smart Contracts
-Solana programs can be rolled back if they were deployed with an upgrade authority.
+### On-Chain Programs
+Rollback capability is contingent on upgrade authority settings and buffer management.
 ```bash
 solana program rollback <PROGRAM_ID>
 ```
-*Note: This depends on the specific buffer management and authority settings.*
 
-### Dashboard
-Use the Vercel/Netlify "Rollback to previous deployment" button.
+### Interface Layer
+Utilize the integrated version control features on Vercel/Netlify to revert to previous stable deployments.

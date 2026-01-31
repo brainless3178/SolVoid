@@ -1,58 +1,58 @@
-#  Troubleshooting SolVoid
+# Technical Diagnostic Guide: Protocol Failure Modes
 
-This document helps resolve common issues encountered while setting up or using the SolVoid protocol.
-
----
-
-##  Common Setup Issues
-
-### "circom" or "snarkjs" command not found
-- **Solution:** Install them globally: `npm install -g circom snarkjs`.
-
-### Rust/Anchor Build Failures
-- **Issue:** `error[E0658]: use of unstable library feature`
-- **Solution:** Ensure you are on the latest stable Rust: `rustup update stable`.
-- **Issue:** `Anchor version mismatch`
-- **Solution:** Check your version with `anchor --version`. This project currently uses `0.30.0`.
+The following procedures facilitate the identification and remediation of common operational and environmental failure modes encountered during protocol initialization or execution.
 
 ---
 
-##  Transaction & Wallet Issues
+## Environmental & Build Failure Modes
 
-### Withdrawal Fails with "Invalid Proof"
-1.  **Check Secret/Nullifier:** Ensure you are using the exact hex strings provided during the deposit. Both are case-sensitive.
-2.  **Verify Amount:** You must withdraw the *exact* amount that was shielded. Partial withdrawals are not currently supported in this alpha version.
-3.  **Root Drift:** If the Merkle Tree was updated by another user while you were generating the proof, your proof is now invalid. Retry the withdrawal.
+### ZK Tooling Availability Conflict
+- **Failure:** Missing `circom` or `snarkjs` binaries in the system path.
+- **Remediation:** Initialize global tool dependencies via `npm install -g circom snarkjs`.
 
-### "Insufficient Vault Balance"
-- **Reason:** Someone might have withdrawn funds before you (if using a testing pool) or there's a protocol fee mismatch.
-- **Check:** Use `solvoid status` to see the vault balance.
-
----
-
-##  Network & RPC Issues
-
-### "429 Too Many Requests"
-- **Reason:** Public RPC endpoints often rate-limit high-volume requests (like fetching a full Merkle Tree).
-- **Solution:** Use a private RPC provider like Helius, Alchemy, or QuickNode.
+### Rust/Anchor Toolchain Discrepancy
+- **Failure:** `error[E0658]: use of unstable library feature`
+- **Remediation:** Synchronize the local Rust toolchain with the latest stable release using `rustup update stable`.
+- **Failure:** `Anchor version mismatch`
+- **Remediation:** Verify that the installed Anchor version aligns with the protocol specification (v0.30.0).
 
 ---
 
-##  FAQ
+## Transactional & Protocol Logic Failures
 
-**Q: Can I withdraw less than I deposited?**
-A: No. Currently, SolVoid is a "full-shield" protocol. You must withdraw the total shielded amount.
+### Withdrawal Rejected: "Invalid Proof"
+1. **Data Integrity Check:** Verify that the secret and nullifier keys match the initial commitment deposit exactly. Note that hex strings are case-sensitive.
+2. **Fixed-Amount Constraint:** Ensure the withdrawal request matches the shielded total exactly. Arity-limited alpha versions do not support partial liquidity unshielding.
+3. **Merkle Root Verification:** A change in the on-chain Merkle root between witness generation and transaction submission will invalidate the proof. Re-synchronize the tree state and regenerate the witness.
 
-**Q: What happens if I lose my secret?**
-A: **The funds are lost forever.** SolVoid is non-custodial and has no "password reset" or recovery mechanism.
-
-**Q: Is SolVoid audited?**
-A: No. This is a hackathon project. Use at your own risk.
+### Execution Fault: "Insufficient Vault Balance"
+- **Context:** Identified during test-net operations where multiple actors interact with synchronized pools.
+- **Verification:** Execute `solvoid status` to retrieve the current real-time vault liquidity state.
 
 ---
 
-##  Where to Get Help
-- **Discord:** [Join our developer channel]
-- **Twitter/X:** [@SolVoid]
-- **GitHub Issues:** [Report a bug](https://github.com/brainless3178/SolVoid/issues)
+## Network & Connectivity Degradation
 
+### RPC Response Code: "429 Too Many Requests"
+- **Context:** High-frequency Merkle tree synchronization frequently exceeds the rate limits of public JSON-RPC providers.
+- **Remediation:** Shift to a dedicated private RPC infrastructure to ensure consistent data throughput.
+
+---
+
+## Operational FAQ
+
+**Q: Are partial withdrawals supported?**
+**A:** No. The current protocol implementation requires the unshielding of the total commitment amount in a single atomic transaction.
+
+**Q: What is the remediation path for lost credential keys?**
+**A:** State Finality Case: Credential loss results in irreversible asset sequestration. The protocol does not implement administrative overrides or recovery mechanisms.
+
+**Q: Has the protocol undergone a professional security audit?**
+**A:** No. SolVoid is currently in an experimental development phase. Operation carries significant technical risk.
+
+---
+
+## Engineering Support Channels
+- **Technical Discourse:** [Discord Developer Channel]
+- **Protocol Status:** [Twitter/X @SolVoid]
+- **Defect Reporting:** [GitHub Issue Tracker](https://github.com/brainless3178/SolVoid/issues)

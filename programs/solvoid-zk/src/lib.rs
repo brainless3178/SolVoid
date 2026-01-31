@@ -1,15 +1,15 @@
 use anchor_lang::prelude::*;
 use ark_bn254::Fr;
-use ark_ff::PrimeField;
+use ark_ff::{PrimeField, BigInteger};
 
 pub mod poseidon;
 pub mod economics;
 pub mod verifier;
 pub mod nullifier_set;
 
-declare_id!("Fg6PaFpoGXkYsidMpSsu3SWJYEHp7rQU9YSTFNDQ4F5i");
+declare_id!("3QcKRYWquzbBR3UpKeh4aKVCSpoHy89UT8gyovzRzzan");
 
-pub const MAX_ROOT_HISTORY: usize = 100;
+pub const MAX_ROOT_HISTORY: usize = 50;
 
 #[program]
 pub mod solvoid_zk {
@@ -23,9 +23,9 @@ pub mod solvoid_zk {
         state.is_initialized = true;
         state.leaf_count = 0;
         
-        // Initialize subtrees with zero hashes for a depth-20 tree
+        // Initialize subtrees with zero hashes for a depth-8 tree
         let mut current_zero = [0u8; 32];
-        for i in 0..20 {
+        for i in 0..8 {
             state.filled_subtrees[i] = current_zero;
             // Hash two of the same zeros to get the zero for the next level
             current_zero = poseidon::PoseidonHasherWrapper::hash_two_bytes(&current_zero, &current_zero)?;
@@ -41,7 +41,11 @@ pub mod solvoid_zk {
         vk: verifier::VerificationKeyData,
     ) -> Result<()> {
         let verifier_state = &mut ctx.accounts.verifier_state;
-        verifier_state.withdraw_vk = vk;
+        verifier_state.vk_alpha_g1 = vk.alpha_g1;
+        verifier_state.vk_beta_g2 = vk.beta_g2;
+        verifier_state.vk_gamma_g2 = vk.gamma_g2;
+        verifier_state.vk_delta_g2 = vk.delta_g2;
+        verifier_state.vk_ic = vk.ic_g1;
         verifier_state.is_initialized = true;
         msg!("Withdrawal Verifier Key Initialized");
         Ok(())
@@ -83,28 +87,22 @@ pub mod solvoid_zk {
 
         // Update the Merkle tree with the new commitment
         let mut current_level_hash = commitment;
-        let mut index = state.leaf_count;
+        let index = state.leaf_count;
         
-        // Zeros for a depth-20 tree
-        let mut zeros = [[0u8; 32]; 20];
+        // Zeros for a depth-8 tree
+        let mut zeros = [[0u8; 32]; 8];
         let mut z = [0u8; 32];
-        for i in 0..20 {
+        for i in 0..8 {
             zeros[i] = z;
             z = poseidon::PoseidonHasherWrapper::hash_two_bytes(&z, &z)?;
         }
 
-        for i in 0..20 {
+        for i in 0..8 {
             if (index >> i) & 1 == 0 {
                 state.filled_subtrees[i] = current_level_hash;
-                current_level_hash = poseidon::PoseidonHasherWrapper::hash_two_bytes(
-                    &current_level_hash,
-                    &zeros[i],
-                )?;
+                current_level_hash = poseidon::PoseidonHasherWrapper::hash_two_bytes(&current_level_hash, &zeros[i])?;
             } else {
-                current_level_hash = poseidon::PoseidonHasherWrapper::hash_two_bytes(
-                    &state.filled_subtrees[i],
-                    &current_level_hash,
-                )?;
+                current_level_hash = poseidon::PoseidonHasherWrapper::hash_two_bytes(&state.filled_subtrees[i], &current_level_hash)?;
             }
         }
 
@@ -157,16 +155,30 @@ pub mod solvoid_zk {
         require!(root_valid, PrivacyError::InvalidRoot);
 
         // 3. Verify ZK-SNARK Proof
-        let verifier_state = &ctx.accounts.verifier_state;
+        let mut public_inputs = [[0u8; 32]; 8];
+        public_inputs[0] = root;
+        public_inputs[1] = nullifier_hash;
+        
+        // Recipient (64 bytes split across two field elements)
+        let r_bytes = recipient.to_bytes();
+        public_inputs[2].copy_from_slice(&r_bytes[0..32]); // low bits simulation
+        
+        // Relayer
+        let rel_bytes = relayer.to_bytes();
+        public_inputs[4].copy_from_slice(&rel_bytes[0..32]);
+        
+        let mut f_bytes = [0u8; 32];
+        f_bytes[..8].copy_from_slice(&fee.to_le_bytes());
+        public_inputs[6] = f_bytes;
+        
+        let mut a_bytes = [0u8; 32];
+        a_bytes[..8].copy_from_slice(&amount.to_le_bytes());
+        public_inputs[7] = a_bytes;
+
         let is_valid = verifier::verify_withdraw_proof(
-            verifier_state,
             &proof,
-            &root,
-            &nullifier_hash,
-            &recipient,
-            &relayer,
-            fee,
-            amount,
+            &public_inputs,
+            &ctx.accounts.verifier_state,
         )?;
         require!(is_valid, PrivacyError::InvalidProof);
 
@@ -244,12 +256,12 @@ pub struct ProgramState {
     pub authority: Pubkey,
     pub merkle_root: [u8; 32],
     pub leaf_count: u64,
-    pub filled_subtrees: [[u8; 32]; 20],
+    pub filled_subtrees: [[u8; 32]; 8],
     pub is_initialized: bool,
 }
 
 impl ProgramState {
-    pub const INIT_SPACE: usize = 32 + 32 + 8 + (32 * 20) + 1;
+    pub const INIT_SPACE: usize = 32 + 32 + 8 + (32 * 8) + 1;
 }
 
 #[account]
@@ -326,9 +338,9 @@ pub struct InitializeEconomics<'info> {
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut, seeds = [b"state"], bump)]
-    pub state: Account<'info, ProgramState>,
+    pub state: Box<Account<'info, ProgramState>>,
     #[account(mut, seeds = [b"root_history"], bump)]
-    pub root_history: Account<'info, RootHistory>,
+    pub root_history: Box<Account<'info, RootHistory>>,
     #[account(mut)]
     pub depositor: Signer<'info>,
     /// CHECK: Vault account holding funds
@@ -345,7 +357,7 @@ pub struct Deposit<'info> {
 )]
 pub struct Withdraw<'info> {
     #[account(mut, seeds = [b"state"], bump)]
-    pub state: Account<'info, ProgramState>,
+    pub state: Box<Account<'info, ProgramState>>,
     /// CHECK: Vault account holding funds
     #[account(mut, seeds = [b"vault"], bump)]
     pub vault: AccountInfo<'info>,
@@ -357,9 +369,9 @@ pub struct Withdraw<'info> {
     #[account(mut, seeds = [b"treasury"], bump)]
     pub protocol_fee_accumulator: AccountInfo<'info>,
     #[account(seeds = [b"verifier", state.key().as_ref()], bump)]
-    pub verifier_state: Account<'info, verifier::VerifierState>,
+    pub verifier_state: Box<Account<'info, verifier::VerifierState>>,
     #[account(seeds = [b"root_history"], bump)]
-    pub root_history: Account<'info, RootHistory>,
+    pub root_history: Box<Account<'info, RootHistory>>,
     #[account(
         init,
         payer = relayer,
@@ -369,7 +381,7 @@ pub struct Withdraw<'info> {
     )]
     pub nullifier_account: Account<'info, nullifier_set::NullifierAccount>,
     #[account(mut, seeds = [b"economic_state"], bump)]
-    pub economic_state: Account<'info, economics::EconomicState>,
+    pub economic_state: Box<Account<'info, economics::EconomicState>>,
     pub system_program: Program<'info, System>,
 }
 

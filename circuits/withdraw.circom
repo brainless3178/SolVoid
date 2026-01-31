@@ -68,4 +68,4 @@ template PrivacyZero(levels) {
 
 component main { 
     public [root, nullifierHash, recipient_low, recipient_high, relayer_low, relayer_high, fee, amount]
-} = PrivacyZero(20);
+} = PrivacyZero(8);

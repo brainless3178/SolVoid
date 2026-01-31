@@ -31,7 +31,7 @@ class EnvironmentValidator {
       'SOLANA_RPC_MAINNET',
       'ZK_PROGRAM_ID'
     ];
-    
+
     this.optionalVars = {
       'ALCHEMY_API_KEY': {
         default: '',
@@ -58,11 +58,11 @@ class EnvironmentValidator {
         description: 'Third backup RPC endpoint (Alchemy)'
       },
       'MERKLE_TREE_LEVELS': {
-        default: '20',
+        default: '8',
         description: 'Merkle tree levels for ZK commitments',
         validator: (value: string) => {
           const num = parseInt(value);
-          return num >= 10 && num <= 30;
+          return num >= 8 && num <= 30;
         }
       },
       'MAX_RETRY_ATTEMPTS': {
@@ -160,7 +160,7 @@ class EnvironmentValidator {
         validator: (value: string) => ['true', 'false'].includes(value.toLowerCase())
       }
     };
-    
+
     this.validationErrors = [];
     this.warnings = [];
   }
@@ -168,20 +168,22 @@ class EnvironmentValidator {
   validate(): ValidationResult {
     this.validationErrors = [];
     this.warnings = [];
-    
+
     // Check required variables
+    const validatedConfig: Record<string, string> = {};
     for (const varName of this.requiredVars) {
       const value = process.env[varName];
       if (!value || value.trim() === '') {
         this.validationErrors.push(`Required environment variable ${varName} is missing or empty`);
+      } else {
+        validatedConfig[varName] = value;
       }
     }
-    
+
     // Check optional variables and apply defaults
-    const validatedConfig: Record<string, string> = {};
     for (const [varName, config] of Object.entries(this.optionalVars)) {
       const value = process.env[varName];
-      
+
       if (!value || value.trim() === '') {
         if (value === '' && config.default === '') {
           // Empty string is acceptable for variables with empty default
@@ -202,7 +204,7 @@ class EnvironmentValidator {
         }
       }
     }
-    
+
     return {
       isValid: this.validationErrors.length === 0,
       errors: this.validationErrors,
@@ -213,22 +215,22 @@ class EnvironmentValidator {
 
   printValidation(): ValidationResult {
     const result = this.validate();
-    
+
     console.log('\n Environment Validation Results:');
     console.log('=====================================');
-    
+
     if (result.isValid) {
       console.log(' All environment variables are valid!');
     } else {
       console.log(' Validation errors found:');
       result.errors.forEach(error => console.log(`   - ${error}`));
     }
-    
+
     if (result.warnings.length > 0) {
       console.log('\n  Warnings:');
       result.warnings.forEach(warning => console.log(`   - ${warning}`));
     }
-    
+
     console.log('\n Configuration Summary:');
     for (const [key, value] of Object.entries(result.config)) {
       if (key.includes('KEY') || key.includes('SECRET') || key.includes('TOKEN')) {
@@ -237,9 +239,9 @@ class EnvironmentValidator {
         console.log(`   ${key}: ${value}`);
       }
     }
-    
+
     console.log('=====================================\n');
-    
+
     return result;
   }
 }

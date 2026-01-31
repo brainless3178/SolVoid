@@ -134,7 +134,7 @@ export const IdlInstructionSchema = z.object({
     args: z.array(IdlFieldSchema),
     discriminator: z.array(z.number()).optional(),
     docs: z.array(z.string()).optional(),
-}).strict();
+});
 
 export const IdlAccountSchema = z.object({
     name: z.string(),
@@ -175,7 +175,7 @@ export const IdlSchema = z.object({
     errors: z.array(IdlErrorSchema).optional(),
     metadata: z.any().optional(),
     address: PublicKeySchema.optional(),
-}).strict(); // Strict validation - no extra fields allowed
+}); // Removed strict to allow Anchor internal mutations
 
 export const ScoreSnapshotSchema = z.object({
     timestamp: z.number().int().nonnegative(),

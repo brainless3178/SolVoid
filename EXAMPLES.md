@@ -1,27 +1,27 @@
-#  SolVoid Examples
+# Implementation Patterns: Integration Examples
 
-This document provides various usage patterns and integration examples for the SolVoid protocol.
+This document outlines standard usage patterns and technical integration examples for the SolVoid protocol.
 
-## 🟢 Basic Usage (Terminal)
+## Primary Protocol Flow (CLI)
 
-### Shielding and Withdrawing
-1. **Deposit 1 SOL:**
+### Core Shielding and Withdrawal Transaction
+1. **Initial Asset Shielding:**
    ```bash
    solvoid shield 1.0
-   # Saved: SECRET=0xabc..., NULLIFIER=0x123...
+   # Persist returned cryptographic primitives: SECRET, NULLIFIER
    ```
-2. **Withdraw to New Wallet:**
+2. **Unlinkable Withdrawal to Remediation Address:**
    ```bash
-   solvoid withdraw 1.0 <NEW_ADDRESS> --secret 0xabc... --nullifier 0x123...
+   solvoid withdraw 1.0 <NEW_ADDRESS> --secret <SECRET_KEY> --nullifier <NULLIFIER_KEY>
    ```
 
 ---
 
-##  Advanced Integration (SDK)
+## SDK Integration Patterns (TypeScript)
 
-Integrating SolVoid into your own dApp using the TypeScript SDK.
+Implementation of the SolVoid SDK within external decentralized applications and automated services.
 
-### Initializing the Client
+### Client Initialization
 ```typescript
 import { SolVoidClient } from '@solvoid/sdk';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -33,25 +33,26 @@ const client = new SolVoidClient({
 }, wallet);
 ```
 
-### Programmatic Shielding
+### Programmatic Asset Shielding
 ```typescript
-const amount = 1_000_000_000; // 1 SOL in Lamports
+const amount = 1_000_000_000; // Standardizing on atomic units (Lamports)
 const { commitmentData, status } = await client.shield(amount);
 
-console.log('Save these for withdrawal:', 
+/** Requirements: Persistence of secret and nullifier for subsequent withdrawal. */
+console.log('Cryptographic Primitives:', 
     commitmentData.secret, 
-     commitmentData.nullifier
+    commitmentData.nullifier
 );
 ```
 
 ---
 
-## 🟠 Relayer Integration
+## Relayer Architecture Integration
 
-Using a relayer allows you to withdraw funds without needing any SOL in the destination wallet for transaction fees.
+The Relayer implementation facilitates gasless withdrawals, decoupling the destination identity from the initial funding source by utilizing a third-party fee payer.
 
-### Configuration
-In your `solvoid` config or `.env`:
+### Configuration Specification
+Define parameters within the protocol configuration or environment variables:
 ```json
 {
   "relayerUrl": "https://relayer.solvoid.network",
@@ -59,46 +60,46 @@ In your `solvoid` config or `.env`:
 }
 ```
 
-### Withdrawal via Relayer
+### Gasless Withdrawal Execution
 ```bash
 solvoid withdraw 1.0 <RECIPIENT> --relayer --fee 0.005
 ```
 
 ---
 
-##  Complex Workflows (The "Rescue" Pattern)
+## Advanced Remediations (The "Atomic Rescue" Pattern)
 
-The "Rescue" pattern is used when a wallet's privacy has been compromised (e.g., linked to an ENS name) and you want to migrate assets to a private state.
+The "Atomic Rescue" pattern is utilized for remediating critical privacy compromises, such as identity linkage or transaction-graph exposure.
 
-1. **Scan for leaks:**
+1. **Leak Vector Identification:**
    ```bash
-   solvoid rescue <LEAKY_WALLET>
+   solvoid rescue <COMPROMISED_WALLET>
    ```
-   *Output: 5 privacy leaks detected in tokens X, Y, Z.*
+   *Result Summary: Multiple anonymity leaks identified in specified asset types.*
 
-2. **Batch Shielding:**
-   The SDK identifies multiple assets and prepares a batch of shielding transactions.
+2. **Automated Batch Shielding:**
+   The SDK identifies all liquid assets and orchestrates a prioritized batch of shielding transactions.
 
-3. **Incremental Withdrawal:**
-   Withdraw funds over several days to different addresses to break timing analysis.
+3. **Temporal Obfuscation:**
+   Execution of withdrawals over randomized intervals to multiple destination addresses to mitigate timing analysis.
 
 ---
 
-##  Integration with Anchor Tests
-Example of how to test SolVoid in your own Anchor project.
+## Anchor Testing Framework Integration
+Standardized pattern for executing privacy verification within Anchor-based testing suites.
 
 ```typescript
-it("performs a private transaction", async () => {
-    // 1. Initialize
+it("executes a verified privacy cycle", async () => {
+    // 1. Initialize logic
     await client.init();
 
-    // 2. Shield
+    // 2. Execute Shielding
     const shieldResult = await client.shield(1e9);
     
-    // 3. Mock Merkle Tree state
+    // 3. Synchronize Merkle Tree state
     const allCommitments = [shieldResult.commitmentData.commitmentHex];
     
-    // 4. Withdraw
+    // 4. Generate ZK Witness
     const withdrawResult = await client.prepareWithdrawal(
         shieldResult.commitmentData.secret,
         shieldResult.commitmentData.nullifier,
@@ -109,7 +110,7 @@ it("performs a private transaction", async () => {
         "./circuits/withdraw.zkey"
     );
 
-    // 5. Submit
+    // 5. Submit Transaction
     const tx = await client.submitWithdrawal(withdrawResult);
     expect(tx).to.be.ok;
 });

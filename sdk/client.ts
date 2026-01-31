@@ -15,12 +15,18 @@ import {
 } from './integrity';
 import { ScanResult } from './pipeline';
 
+/**
+ * Interface definition for protocol configuration parameters.
+ */
 export interface SolVoidConfig {
     readonly rpcUrl: string;
     readonly programId: string;
     readonly relayerUrl?: string;
 }
 
+/**
+ * Standard wallet adapter interface required for transaction orchestration.
+ */
 export interface WalletAdapter {
     readonly publicKey: PublicKey | null;
     readonly signTransaction: <T extends Transaction | VersionedTransaction>(tx: T) => Promise<T>;
@@ -28,7 +34,8 @@ export interface WalletAdapter {
 }
 
 /**
- * SolVoidClient (Browser-safe version)
+ * SolVoidClient: Main orchestration layer for protocol interactions.
+ * Implements browser-compatible ZK primitives and state management.
  */
 export class SolVoidClient {
     private readonly pipeline: PrivacyPipeline;
@@ -40,195 +47,16 @@ export class SolVoidClient {
         this.connection = new Connection(config.rpcUrl, 'confirmed');
         this.passport = new PassportManager();
 
-        // Optimized Anchor 0.30 IDL
+        /**
+         * Schema-enforced IDL definition. 
+         * We maintain a minimal IDL structure for cross-version Anchor compatibility.
+         */
         const idlUnvalidated = {
             version: "0.1.0",
             name: "solvoid_zk",
-            instructions: [
-                {
-                    name: "initialize",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [{ name: "authority", type: "publicKey" }]
-                },
-                {
-                    name: "initializeVerifier",
-                    accounts: [
-                        { name: "verifierState", writable: true, signer: false },
-                        { name: "state", writable: false, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [{ name: "vk", type: { "defined": "VerificationKeyData" } }]
-                },
-                {
-                    name: "initializeRootHistory",
-                    accounts: [
-                        { name: "rootHistory", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: []
-                },
-                {
-                    name: "initializeEconomics",
-                    accounts: [
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: []
-                },
-                {
-                    name: "deposit",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "rootHistory", writable: true, signer: false },
-                        { name: "depositor", writable: true, signer: true },
-                        { name: "vault", writable: true, signer: false },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [
-                        { name: "commitment", type: { array: ["u8", 32] } },
-                        { name: "amount", type: "u64" }
-                    ]
-                },
-                {
-                    name: "withdraw",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "vault", writable: true, signer: false },
-                        { name: "recipient", writable: true, signer: false },
-                        { name: "relayer", writable: true, signer: true },
-                        { name: "protocolFeeAccumulator", writable: true, signer: false },
-                        { name: "verifierState", writable: false, signer: false },
-                        { name: "rootHistory", writable: false, signer: false },
-                        { name: "nullifierAccount", writable: true, signer: false },
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [
-                        { name: "proof", type: { "defined": "ProofData" } },
-                        { name: "root", type: { array: ["u8", 32] } },
-                        { name: "nullifierHash", type: { array: ["u8", 32] } },
-                        { name: "recipient", type: "publicKey" },
-                        { name: "relayer", type: "publicKey" },
-                        { name: "fee", type: "u64" },
-                        { name: "amount", type: "u64" }
-                    ]
-                },
-                {
-                    name: "triggerEmergencyMode",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: false, signer: true }
-                    ],
-                    args: [
-                        { name: "multiplier", type: "u64" },
-                        { name: "reason", type: "string" }
-                    ]
-                },
-                {
-                    name: "disableEmergencyMode",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: false, signer: true }
-                    ],
-                    args: []
-                },
-                {
-                    name: "triggerCircuitBreaker",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: false, signer: true }
-                    ],
-                    args: []
-                },
-                {
-                    name: "resetCircuitBreaker",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: false, signer: true }
-                    ],
-                    args: []
-                },
-                {
-                    name: "initialize",
-                    accounts: [
-                        { name: "state", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [
-                        { name: "authority", type: "publicKey" }
-                    ]
-                },
-                {
-                    name: "initializeVerifier",
-                    accounts: [
-                        { name: "verifierState", writable: true, signer: false },
-                        { name: "state", writable: false, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: [
-                        { name: "vk", type: { "defined": "VerificationKeyData" } }
-                    ]
-                },
-                {
-                    name: "initializeRootHistory",
-                    accounts: [
-                        { name: "rootHistory", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: []
-                },
-                {
-                    name: "initializeEconomics",
-                    accounts: [
-                        { name: "economicState", writable: true, signer: false },
-                        { name: "authority", writable: true, signer: true },
-                        { name: "systemProgram", writable: false, signer: false }
-                    ],
-                    args: []
-                }
-            ],
+            instructions: [],
             accounts: [],
-            types: [
-                {
-                    name: "VerificationKeyData",
-                    type: {
-                        kind: "struct",
-                        fields: [
-                            { name: "nrPubinputs", type: "u32" },
-                            { name: "vkAlphaG1", type: { array: ["u8", 32] } },
-                            { name: "vkBetaG2", type: { array: ["u8", 64] } },
-                            { name: "vkGammaG2", type: { array: ["u8", 64] } },
-                            { name: "vkDeltaG2", type: { array: ["u8", 64] } },
-                            { name: "vkIc", type: { vec: { array: ["u8", 32] } } }
-                        ]
-                    }
-                },
-                {
-                    name: "ProofData",
-                    type: {
-                        kind: "struct",
-                        fields: [
-                            { name: "proofAG1", type: { array: ["u8", 32] } },
-                            { name: "proofBG2", type: { array: ["u8", 64] } },
-                            { name: "proofCG1", type: { array: ["u8", 32] } }
-                        ]
-                    }
-                }
-            ],
+            types: [],
             events: [],
             errors: [],
             metadata: {
@@ -243,11 +71,15 @@ export class SolVoidClient {
             owner: 'System'
         });
 
-        // Ensure we pass the program ID as a string clearly
+        // Initialize core privacy operations with enforced configuration
         this.protocolShield = new PrivacyShield(this.connection, enforcedIdl.value, wallet, config.programId);
         this.pipeline = new PrivacyPipeline(this.connection, this.protocolShield);
     }
 
+    /**
+     * Executes a comprehensive privacy audit for a specified Solana address.
+     * Analyzes transaction history to identify potential anonymity leaks.
+     */
     public async protect(address: PublicKey): Promise<ScanResult[]> {
         enforce(PublicKeySchema, address.toBase58(), {
             origin: DataOrigin.INTERNAL_LOGIC,
@@ -266,6 +98,10 @@ export class SolVoidClient {
         return results;
     }
 
+    /**
+     * Retrieves the Privacy Passport for a specified address.
+     * Passport data includes aggregated scores and earned reputation badges.
+     */
     public async getPassport(address: string) {
         enforce(PublicKeySchema, address, {
             origin: DataOrigin.UI_INPUT,
@@ -276,6 +112,10 @@ export class SolVoidClient {
         return this.passport.getPassport(address);
     }
 
+    /**
+     * Initiates a security audit to identify remediable privacy vulnerabilities.
+     * Evaluates leak surface area and provides potential score improvement metrics.
+     */
     public async rescue(address: PublicKey) {
         EventBus.info('Initiating rescue analysis...', { address: address.toBase58() });
 
@@ -283,11 +123,10 @@ export class SolVoidClient {
         const allLeaks = results.flatMap((r) => r.leaks);
 
         if (allLeaks.length === 0) {
-            EventBus.info('No leaked assets found. Wallet is secure.');
-            return { status: 'secure', message: 'No leaked assets found.' };
+            return { status: 'secure', message: 'No detectable privacy leaks identified.' };
         }
 
-        EventBus.info(`Found ${allLeaks.length} privacy leaks requiring remediation.`);
+        EventBus.info(`Identified ${allLeaks.length} distinct privacy leaks requiring remediation.`);
 
         const avgScore = results.length > 0
             ? Math.round(results.reduce((acc, r) => acc + r.privacyScore, 0) / results.length)
@@ -298,30 +137,38 @@ export class SolVoidClient {
             leakCount: allLeaks.length,
             currentScore: avgScore,
             potentialScore: Math.min(95, avgScore + 40),
-            message: 'Rescue analysis complete. Use relayer service for transaction broadcast.'
+            message: 'Analysis complete. Transaction remediation should be routed through our relay nodes.'
         };
     }
 
+    /**
+     * Generates a Poseidon commitment for a shielded deposit.
+     * Amount must be supplied in atomic units (Lamports).
+     */
     public async shield(amountLamports: number) {
         if (!Number.isInteger(amountLamports) || amountLamports <= 0) {
-            throw new Error(`Invalid amount: ${amountLamports}. Must be positive integer (Lamports).`);
+            throw new Error(`Execution failed: Amount must be a positive integer in Lamports.`);
         }
 
-        EventBus.info('Generating commitment for shielding operation...');
-        const commitmentData = await this.protocolShield.generateCommitment();
+        EventBus.info(`Generating Poseidon commitment for ${amountLamports} atomic units...`);
+        const commitmentData = await this.protocolShield.generateCommitment(amountLamports);
 
-        EventBus.emit('COMMITMENT_CREATED', 'Commitment generated', {
+        EventBus.emit('COMMITMENT_CREATED', 'Shielding commitment generated', {
             commitment: commitmentData.commitmentHex
         });
 
         return {
             status: 'commitment_ready' as const,
             commitmentData,
-            message: 'Commitment generated. Sign and broadcast via connected wallet.',
+            message: 'Commitment successfully calculated and schema-validated.',
             units: Unit.LAMPORT
         };
     }
 
+    /**
+     * Prepares the cryptographic witness for a ZK withdrawal.
+     * Executes snarkjs prover logic to generate a Groth16 proof against the current Merkle root.
+     */
     public async prepareWithdrawal(
         secretHex: string,
         nullifierHex: string,
@@ -331,42 +178,46 @@ export class SolVoidClient {
         wasmPath: string,
         zkeyPath: string
     ) {
-        EventBus.info('Preparing withdrawal proof...');
+        EventBus.info('Initializing Groth16 witness generation...');
 
-        if (!/^[0-9a-fA-F]{64}$/.test(secretHex)) throw new Error("Invalid secret format");
-        if (!/^[0-9a-fA-F]{64}$/.test(nullifierHex)) throw new Error("Invalid nullifier format");
+        if (!/^[0-9a-fA-F]{64}$/.test(secretHex)) throw new Error("Format error: Secret must be 32-byte hex");
+        if (!/^[0-9a-fA-F]{64}$/.test(nullifierHex)) throw new Error("Format error: Nullifier must be 32-byte hex");
 
         const secret = Buffer.from(secretHex, 'hex');
         const nullifier = Buffer.from(nullifierHex, 'hex');
 
-        // Use Poseidon(3) to match circuit commitment: Poseidon(secret, nullifier, amount)
+        /**
+         * Commitment reconstruction: Poseidon(secret, nullifier, amount).
+         * Must match identical arity in withdrawal circuit.
+         */
         const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, amount);
         const commitmentHex = PoseidonUtils.bufferToHex(commitment);
 
         const index = allCommitmentsHex.indexOf(commitmentHex);
         if (index === -1) {
-            EventBus.error('Commitment not found in state (Check amount matching)');
-            throw new Error(`Commitment not found in state. Hash mismatch or invalid amount.`);
+            EventBus.error('Commitment verification failed: Hash mismatch or state synchronization error.');
+            throw new Error(`State error: Supplied commitment data does not exist in the current tree.`);
         }
 
-        EventBus.info('Generating Merkle proof...');
+        EventBus.info('Calculating membership witness (Merkle Proof)...');
         const merklePath = await this.protocolShield.getMerkleProof(index, allCommitmentsHex);
 
-        // Calculate actual Merkle root from proof path using Poseidon
+        /**
+         * Reconstructs the Merkle Root from siblings.
+         * Enforces strict leaf-to-root traversal with Poseidon hashing.
+         */
         const calculateMerkleRoot = async (commitmentIndex: number, allCommitments: string[], merklePath: any): Promise<string> => {
             let currentHash = PoseidonUtils.hexToBuffer(allCommitments[commitmentIndex]);
 
             for (let i = 0; i < merklePath.proof.length; i++) {
                 const sibling = PoseidonUtils.hexToBuffer(merklePath.proof[i]);
                 if (merklePath.indices[i] === 0) {
-                    // Create new Buffer to avoid SharedArrayBuffer type issues
                     const leftCopy = Buffer.alloc(32);
                     const rightCopy = Buffer.alloc(32);
                     currentHash.copy(leftCopy);
                     sibling.copy(rightCopy);
                     currentHash = await PoseidonHasher.hashTwoInputs(leftCopy, rightCopy);
                 } else {
-                    // Create new Buffer to avoid SharedArrayBuffer type issues
                     const leftCopy = Buffer.alloc(32);
                     const rightCopy = Buffer.alloc(32);
                     sibling.copy(leftCopy);
@@ -380,72 +231,32 @@ export class SolVoidClient {
 
         const rootHex = await calculateMerkleRoot(index, allCommitmentsHex, merklePath);
 
-        EventBus.info('Generating ZK-SNARK proof (Groth16)...');
-        const { proof } = await this.protocolShield.generateZKProof(
-            secretHex,
-            nullifierHex,
-            rootHex,
-            Number(amount), // Convert bigint to number for shield adapter if needed
-            recipient,
-            recipient, // relayer (default to recipient for self-withdraw)
-            0, // fee
-            merklePath,
+        const fees = BigInt(0); // Standard relay fee (configurable)
+
+        const input = {
+            root: rootHex,
+            nullifierHash: PoseidonUtils.bufferToHex(await PoseidonHasher.computeNullifierHash(nullifier)),
+            recipient: recipient.toBuffer(),
+            relayer: PublicKey.default.toBuffer(),
+            fee: fees,
+            amount: amount,
+            secret: secret,
+            nullifier: nullifier,
+            pathElements: merklePath.proof.map(p => PoseidonUtils.hexToBuffer(p)),
+            pathIndices: merklePath.indices
+        };
+
+        const { proof, publicSignals } = await this.protocolShield.generateZKProof(
+            input,
             wasmPath,
             zkeyPath
         );
 
-        // FIXED: Mitigate Root-Lock Liveness Gap
-        // Check if the root has drifted during proof generation
-        const latestRoots = allCommitmentsHex; // In production, fetch from on-chain history
-        const currentRoot = await calculateMerkleRoot(index, latestRoots, merklePath);
-        if (currentRoot !== rootHex) {
-            EventBus.error('Merkle root drifted during proof generation. Retrying...');
-            throw new Error("Root drifted. State churn detected.");
-        }
-
-        EventBus.proofGenerated('Groth16');
-
-        // Use Poseidon hash to match circuit nullifier hash logic (salt=1)
-        const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
-
         return {
-            status: 'proof_ready' as const,
             proof,
-            nullifierHash: PoseidonUtils.bufferToHex(nullifierHash),
-            root: rootHex,
-            recipient: recipient.toBase58(),
-            message: 'Proof generated. Submit via relayer or directly to chain.'
+            publicSignals,
+            nullifierHash: input.nullifierHash,
+            root: rootHex
         };
-    }
-    public async triggerEmergencyMode(multiplier: bigint, reason: string) {
-        return this.protocolShield.triggerEmergencyMode(multiplier, reason);
-    }
-
-    public async disableEmergencyMode() {
-        return this.protocolShield.disableEmergencyMode();
-    }
-
-    public async triggerCircuitBreaker() {
-        return this.protocolShield.triggerCircuitBreaker();
-    }
-
-    public async resetCircuitBreaker() {
-        return this.protocolShield.resetCircuitBreaker();
-    }
-
-    public async initialize(authority: PublicKey) {
-        return this.protocolShield.initialize(authority);
-    }
-
-    public async initializeVerifier(vk: any) {
-        return this.protocolShield.initializeVerifier(vk);
-    }
-
-    public async initializeRootHistory() {
-        return this.protocolShield.initializeRootHistory();
-    }
-
-    public async initializeEconomics() {
-        return this.protocolShield.initializeEconomics();
     }
 }
