@@ -2,12 +2,13 @@
 
 All notable changes to the SolVoid SDK will be documented in this file.
 
-## [1.1.3] - 2026-01-31
+## [1.1.4] - 2026-01-31
 
-### Added
-- **Poseidon-3 Sponge Construction**: Critical update to the cryptographic hashing engine. Now fully consistent with the on-chain Rust Poseidon implementation.
-- **Data Integrity Enforcement (DIE)**: Implemented a strict boundary validation layer using Zod to prevent malformed data injection and ensure type-safe interactions with the Solana blockchain.
-- **Privacy Passport Manager**: Enhanced logic for managing and calculating the Privacy Ghost Score directly within the SDK.
+### Synchronized
+- **Circuit-to-SDK Parity**: Finalized the synchronization of G1/G2 point verification signatures across the ZK proving pipeline.
+- **Professionalized Documentation**: Completed the transition to institutional-grade technical communication across all READMEs and internal comments.
+
+## [1.1.3] - 2026-01-31
 
 ### Fixed
 - **Path Normalization**: Corrected directory structural inconsistencies that caused import failures in external CLI and Dashboard environments.
