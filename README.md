@@ -1,5 +1,9 @@
 # SolVoid: Institutional-Grade Privacy Infrastructure for Solana
 
+<div align="center">
+  <img src="./solvoid_assets.png" alt="SolVoid Architecture Infographic" width="800">
+</div>
+
 [![Protocol Status](https://img.shields.io/badge/Protocol-Beta-cyan.svg)](https://solvoid.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-gray.svg)](https://opensource.org/licenses/MIT)
 [![Security: ZK-Optimized](https://img.shields.io/badge/Security-ZK--Optimized-blue.svg)](./ZK_REFERENCE.md)
@@ -8,33 +12,37 @@ SolVoid is a high-performance, non-custodial privacy protocol designed for the S
 
 ---
 
-## 🏛 Protocol Architecture
+## 🏛 Technical Architecture
 
 SolVoid orchestrates a multi-layered privacy lifecycle (PLM) that decouples on-chain identities from their transaction history while maintaining full protocol verifiability.
 
-![SolVoid Architecture](./solvoid_architecture_premium_1769868901255.png)
-
-### Core Components
-- **ZK-Prover Engine:** Orchestrates client-side Groth16 witness generation on the BN254 curve.
-- **Merkle Tree State:** Optimized 20-level sparse tree implementation supporting over 1,000,000 unique commitments.
-- **Shadow Relayer Network:** A decentralized RSA-OAEP onion-routing network for gasless, unlinkable transaction broadcast.
-- **On-chain Verifier:** An Anchor-based validation layer implementing efficient G1/G2 point verification for proof acceptance.
+### Operational Data Flow
+```mermaid
+graph TD
+    A[Identity Layer] -->|Shielding Transaction| B(ZK-Prover Engine)
+    B -->|Groth16 Witness| C{SolVoid Vault}
+    C -->|Commitment Stored| D[Merkle Tree State]
+    E[Anonymity Recovery] -->|Withdrawal Request| F(Shadow Relayer)
+    F -->|Onion Routing| G(On-chain Verifier)
+    G -->|Proof Validated| H[Fresh Destination Address]
+    D -.->|Membership Proof| G
+```
 
 ---
 
-## 🚀 Key Features
+## 🚀 Protocol Specifications
 
 | Feature | Technical Specification |
 |:---|:---|
-| **Zero-Knowledge** | Groth16 proofs with verified R1CS constraints |
-| **Privacy Scoring** | HEURISTIC-based "Ghost Score" (0-100) for anonymity auditing |
+| **Zero-Knowledge** | Groth16 proofs on BN254 curve with verified R1CS constraints |
+| **Privacy Scoring** | HEURISTIC-optimized "Ghost Score" (0-100) for anonymity auditing |
 | **Atomic Rescue** | Automated rotation of leaked assets for compromised wallets |
-| **Onion Routing** | Recursive encryption layer for transaction obfuscation |
+| **Onion Routing** | Multi-hop RSA-OAEP encryption for transaction obfuscation |
 | **Data Integrity** | Strict schema enforcement across CLI, SDK, and API boundaries |
 
 ---
 
-## 📦 Technical Deployment
+## 📦 technical Deployment
 
 ### 1. Environment Initialization
 ```bash
@@ -43,20 +51,10 @@ cd SolVoid
 npm install
 ```
 
-### 2. ZK Circuit Compilation
+### 2. ZK Proving Pipeline
 Ensure `circom` and `snarkjs` are available in the local binary path.
 ```bash
 ./scripts/build-zk.sh
-```
-
-### 3. Service Orchestration
-Initialize the Shadow Relayer and local dashboard.
-```bash
-# Start Relayer
-cd relayer && npm start
-
-# Start Dashboard
-cd dashboard && npm run dev
 ```
 
 ---
@@ -96,11 +94,4 @@ Protocol integrity is the core focus of the SolVoid Engineering team.
 - **Vulnerability Policy:** Refer to [SECURITY.md](SECURITY.md) for disclosure protocols.
 
 ---
-
-## 📄 Licensing
-
-Distributed under the MIT License. See `LICENSE` for additional parameters.
-
----
-
 *Engineering-First. Privacy-Preserving. Solana-Native.*
