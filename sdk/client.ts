@@ -233,29 +233,25 @@ export class SolVoidClient {
 
         const fees = BigInt(0); // Standard relay fee (configurable)
 
-        const input = {
-            root: rootHex,
-            nullifierHash: PoseidonUtils.bufferToHex(await PoseidonHasher.computeNullifierHash(nullifier)),
-            recipient: recipient.toBuffer(),
-            relayer: PublicKey.default.toBuffer(),
-            fee: fees,
-            amount: amount,
-            secret: secret,
-            nullifier: nullifier,
-            pathElements: merklePath.proof.map(p => PoseidonUtils.hexToBuffer(p)),
-            pathIndices: merklePath.indices
-        };
-
         const { proof, publicSignals } = await this.protocolShield.generateZKProof(
-            input,
+            secretHex,
+            nullifierHex,
+            rootHex,
+            Number(amount),
+            recipient,
+            PublicKey.default,
+            Number(fees),
+            merklePath,
             wasmPath,
             zkeyPath
         );
 
+        const nullifierHash = PoseidonUtils.bufferToHex(await PoseidonHasher.computeNullifierHash(nullifier));
+
         return {
             proof,
             publicSignals,
-            nullifierHash: input.nullifierHash,
+            nullifierHash,
             root: rootHex
         };
     }
