@@ -1,72 +1,146 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to SolVoid will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-02-01
+## [1.3.0] - 2026-01-31
 
-### Added
-- **Production Asset Oracles**: Integrated real-time Pyth Network pricing into the `AssetScanner`, replacing static price placeholders.
-- **Poseidon Privacy Badges**: Replaced SHA256 badge mockups with cryptographically secure Poseidon commitments, enabling future on-chain ZK verification.
-- **Atomic Rescue v2**: Fully integrated the `solvoid-zk` Anchor program into the `RescueEngine`, utilizing real PDAs and program discriminators for shield operations.
-- **Mainnet MEV Shielding**: Implemented production Jito MEV bundle submission in the `RescueEngine` for front-running protection.
-- **Risk-Aware Forensics**: Connected `ThreatIntelligence` to Solscan Risk API for real-time address reputation and threat analysis.
-- **Full TypeScript Migration**: Converted all remaining `.js` utilities and infrastructure components to TypeScript for maximum type safety and production readiness.
+### 🚀 Added
+- Full production-ready RescueEngine implementation
+- Jito-MEV bundle integration for atomic asset recovery
+- Economic Safety Layer with circuit breaker controls
+- Emergency fee multiplier system (1x-10x)
 
-### Changed
-- **Rescue Orchestration**: The `rescue` command now requires a private key for transaction signing while allowing public keys for analysis-only mode.
-- **Architecture**: Standardized all utility imports to use the newly compiled TypeScript modules.
+### 🔧 Fixed
+- RescueEngine build errors resolved
+- TypeScript compilation issues in SDK
+- Production migration path finalized
 
-### Fixed
-- **Value Calculation**: Resolved a critical bug in `AssetScanner` where total value was incorrectly summing lamports and USD values.
-- **Relayer Sanitization**: Enhanced timestamp verification and replay protection in the `secure-service`.
-
-## [1.2.0] - 2026-01-31
-
-### Added
-- **Protocol Administration Suite**: New `admin` commands in the CLI for triggering/disabling emergency modes and managing the circuit breaker.
-- **Enhanced Emergency Procedures**: Fully scripted and tested procedures for protocol pause, resume, and fee scaling.
-- **Unified Command & API Index**: Created `COMMANDS2.md` as the definitive cross-component reference guide.
-- **SDK Administrative Layer**: Integrated all on-chain administrative and initialization instructions into the `SolVoidClient` and `PrivacyShield` classes.
-
-### Changed
-- **PDA Architecture**: Standardized on-chain account derivation for `state` and `economic_state` across all testing and deployment scripts.
-- **CLI Refactoring**: Modularized `ghost` and `rescue` commands for improved maintainability.
-
-### Fixed
-- **SDK Synchronisation**: Fixed missing instructions in the hardcoded IDL and added the missing `PublicKey` imports in administration scripts.
-- **Build Integrity**: Resolved TS2339 property missing errors in the CLI entry point.
-
-## [1.1.3] - 2026-01-31
-
-### Added
-- **Poseidon-3 Sponge Construction**: Integrated the finalized Sponge-construction hashing across SDK, CLI, and Smart Contracts.
-- **Data Integrity Enforcement (DIE)**: Added a strict Zod-based validation layer to the SDK and CLI for enhanced security.
-- **Privacy Passport & Ghost Score**: Fully functional diagnostic suite for on-chain anonymity assessment.
-- **Shadow Relayer 2.0**: Updated relayer connectivity logic for gasless transaction support.
-- **Institutional Scanner**: 40+ RPC endpoint rotation engine for maximum resilience.
-
-### Changed
-- **SDK v1.1.3 Bump**: Updated native SolVoid SDK to stable distribution grade.
-- **Path Standardisation**: Unified all component directory structures (moving from `program/` to `programs/` and standardising `sdk/`).
-- **Demo Script**: Enhanced `solvoid_gold_demo.sh` to use real Mainnet data (Binance Whale) for high-impact presentations.
-
-### Fixed
-- **Merkle Root Liveness**: Mitigated "Root Drift" issues during long-duration proof generation.
-- **CLI Pathing**: Resolved nested directory require issues in the `solvoid-scan` binary.
-- **Cryptographic Parity**: Fixed hash mismatches between Rust Poseidon and TypeScript Poseidon implementations.
+### 📚 Changed
+- Upgraded to production-grade error handling
+- Improved vault PDA derivation logic
 
 ---
 
-## [0.1.0-alpha] - 2026-01-25
+## [1.2.0] - 2026-01-30
 
-### Added
-- Initial project structure.
-- Basic Circom circuits for Groth16.
-- Simple Anchor program with Deposit/Withdraw instructions.
-- Dashboard boilerplate with Solana wallet integration.
+### 🚀 Added
+- Administrative SDK methods (`triggerEmergencyMode`, `disableEmergencyMode`)
+- Circuit breaker controls (`triggerCircuitBreaker`, `resetCircuitBreaker`)
+- Enhanced CLI admin commands
 
-### Security
-- Implemented basic binding of recipient address to ZK proof public inputs.
+### 🔧 Fixed
+- SDK build errors for administrative infrastructure
+- Method signature alignment across modules
+
+---
+
+## [1.1.7] - 2026-01-31
+
+### 📚 Changed
+- Achieved visual parity between GitHub and npm READMEs
+- Unified documentation styling across platforms
+
+---
+
+## [1.1.6] - 2026-01-31
+
+### 📚 Added
+- Comprehensive ecosystem documentation
+- ZK circuits reference guide
+- Jito-MEV integration docs
+- QA standards documentation
+
+### 🔧 Changed
+- Merged ecosystem docs into SDK README
+
+---
+
+## [1.1.5] - 2026-01-31
+
+### 📚 Changed
+- Synchronized SDK documentation
+- Version bump for documentation updates
+
+---
+
+## [1.1.4] - 2026-01-31
+
+### 📚 Changed
+- Professionalized release documentation
+- Enhanced README formatting
+
+---
+
+## [1.1.3] - 2026-01-30
+
+### 🔧 Fixed
+- Synchronized `prepareWithdrawal` with updated `generateZKProof` signature
+- Path normalization across codebase
+
+### 📚 Changed
+- Professionalized documentation and source code comments
+- Major codebase sanitization
+
+---
+
+## [1.1.2] - 2026-01-29
+
+### 🔧 Fixed
+- Minor bug fixes and stability improvements
+
+---
+
+## [1.1.1] - 2026-01-29
+
+### 🔧 Fixed
+- Post-release hotfixes
+- Package configuration corrections
+
+---
+
+## [1.1.0] - 2026-01-29
+
+### 🚀 Added
+- Ghost Score privacy reputation system
+- Shadow Relayer network with onion routing (1-5 hops)
+- CLI tools (`shield`, `withdraw`, `ghost`, `rescue`, `admin`)
+- TypeScript SDK with full type definitions
+
+### 🔧 Changed
+- Upgraded Merkle tree implementation
+- Enhanced ZK proof generation pipeline
+
+---
+
+## [1.0.0] - 2026-01-26
+
+### 🎉 Initial Release
+
+#### Core Features
+- **ZK-SNARK Privacy Engine**: Groth16 proofs on BN254 curve
+- **Poseidon-3 Hashing**: Circuit-optimized hash function with cross-platform parity
+- **On-Chain Program**: Anchor-based Solana program with depth-8 Merkle tree
+- **Root History**: 50-root sliding window for proof freshness
+- **Nullifier Protection**: PDA-based double-spend prevention
+
+#### Infrastructure
+- Non-custodial shielded pool architecture
+- Deposit and withdrawal lifecycle management
+- Field element validation for BN254 compliance
+
+#### Developer Tools
+- TypeScript SDK (`SolVoidClient`)
+- Basic CLI interface
+- Integration test suite
+
+---
+
+## Links
+
+- **npm**: [npmjs.com/package/solvoid](https://www.npmjs.com/package/solvoid)
+- **GitHub**: [github.com/brainless3178/SolVoid](https://github.com/brainless3178/SolVoid)
+- **Documentation**: [README.md](./README.md)
+

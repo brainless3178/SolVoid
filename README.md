@@ -4,9 +4,13 @@
   <img src="./solvoid_assets.png" alt="SolVoid Architecture Infographic" width="800">
 </div>
 
+[![npm version](https://img.shields.io/npm/v/solvoid.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/solvoid)
+[![npm downloads](https://img.shields.io/npm/dm/solvoid.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/solvoid)
+[![GitHub release](https://img.shields.io/github/v/release/brainless3178/SolVoid?style=flat-square&color=181717)](https://github.com/brainless3178/SolVoid/releases)
 [![Protocol Status](https://img.shields.io/badge/Protocol-Beta-cyan.svg)](https://solvoid.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-gray.svg)](https://opensource.org/licenses/MIT)
 [![Security: ZK-Optimized](https://img.shields.io/badge/Security-ZK--Optimized-blue.svg)](./ZK_REFERENCE.md)
+[![Changelog](https://img.shields.io/badge/Changelog-View-blue.svg)](./CHANGELOG.md)
 
 SolVoid is a high-performance, non-custodial privacy protocol designed for the Solana ecosystem. By leveraging **Groth16 Zero-Knowledge Proofs** and circuit-optimized **Poseidon-3 hashing**, SolVoid enables cryptographically unlinkable asset transfers and identity obfuscation with sub-second latency.
 
