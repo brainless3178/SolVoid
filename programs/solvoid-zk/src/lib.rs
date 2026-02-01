@@ -427,4 +427,6 @@ pub enum PrivacyError {
     InvalidMultiplier,
     #[msg("Rate limit exceeded")]
     RateLimitExceeded,
+    #[msg("Poseidon hash computation failed")]
+    PoseidonHashFailed,
 }

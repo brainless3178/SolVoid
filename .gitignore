@@ -95,3 +95,8 @@ solana/
 **/.env*
 
 solana/
+
+# Circuit artifacts (symlinks to build)
+withdraw.wasm
+withdraw_final.zkey
+verification_key.json

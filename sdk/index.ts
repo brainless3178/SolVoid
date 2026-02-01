@@ -32,6 +32,12 @@ export { KNOWN_PROGRAMS, identifyProgram, isSwapProgram } from './registry/progr
 // Export event system (browser-safe)
 export { EventBus, ForensicEvent } from './events/bus';
 
+// Export semantic analysis tools
+export { SemanticAnalyzer, InstructionSemantics, TransactionSemantics, InstructionCategory, PrivacyImpact } from './semantics/analyzer';
+export { TransactionGraph, TransactionNode, TransactionEdge, GraphPath, NodeCluster, GraphMetrics } from './semantics/graph';
+export { InstructionDecoder } from './semantics/decoder';
+export { IdlRegistry } from './semantics/idl-registry';
+
 // Note: The following are server-side only and should be imported directly:
 // - PrivacyRelayer from './privacy/relayer'
 // - ShadowRPC from './network/shadow-rpc'

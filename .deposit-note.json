@@ -1,8 +1,0 @@
-{
-  "secret": "baa0f8c56704f47fea0844d1a82b750c343a2387d118ea58203bced45b899406",
-  "nullifier": "e69b3766403f44f115de6edddd3a87fd4af8c3097373c57004ed217520b07357",
-  "commitment": "4aa21a1949f4674886ea6d6e69fa1c509ce60dd1cd7458a2dd9fcdbfc6fb5424",
-  "nullifierHash": "4afe4efe9440393aaee5b49824da8bcf72b9c3f63d651faafe80d4b0e7ffd312",
-  "amount": "100000000",
-  "timestamp": 1769847391340
-}

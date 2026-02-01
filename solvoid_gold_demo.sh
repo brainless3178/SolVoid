@@ -166,7 +166,7 @@ main() {
     print_header "PILLAR 1: CLI & SDK - MAXIMUM RESILIENCE PRIVACY SCAN (40+ RPCs)"
     
     echo -e "${Y}# Showcasing CLI Breadth: Exhaustive Privacy Command Suite${NC}"
-    node cli/dist/cli.js --help | head -n 25
+    npx ts-node cli/solvoid-scan.ts --help 2>/dev/null | head -n 25 || echo 'CLI Help available via: solvoid-scan <command> [options]'
     sleep 5
     echo ""
     
@@ -219,7 +219,7 @@ main() {
         # Open Master Command Cheat Sheet (Proof of Exhaustive Documentation)
         xdotool key ctrl+p
         sleep 0.3
-        xdotool type "COMMANDS.md"
+        xdotool type "FULL_COMMAND_REFERENCE.md"
         sleep 0.3
         xdotool key Return
         sleep 5
@@ -262,7 +262,7 @@ main() {
         head -n 30 sdk/client.ts 2>/dev/null || echo "SDK file preview..."
         sleep 10
         echo -e "\n${C}=== Smart Contract (lib.rs) ===${NC}"
-        head -n 30 programs/solvoid/src/lib.rs 2>/dev/null || echo "Contract file preview..."
+        head -n 30 programs/solvoid-zk/src/lib.rs 2>/dev/null || echo "Contract file preview..."
         sleep 10
     fi
     
