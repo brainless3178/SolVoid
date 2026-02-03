@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { execSync } from 'child_process';
+import { spawnSync, SpawnSyncReturns } from 'child_process';
 
 const CEREMONY_DIR = path.join(__dirname, 'contributions');
 const CIRCUIT_DIR = path.join(__dirname, '..', 'circuits');
@@ -64,6 +64,49 @@ class RealCeremonyCoordinator {
         this.loadState();
     }
 
+    /**
+     * Safely execute a command with array-based arguments (no shell injection)
+     */
+    private safeExec(command: string, args: string[]): void {
+        const result: SpawnSyncReturns<Buffer> = spawnSync(command, args, {
+            stdio: 'inherit',
+            shell: false  // CRITICAL: Disable shell to prevent injection
+        });
+        
+        if (result.error) {
+            throw new Error(`Command failed: ${result.error.message}`);
+        }
+        if (result.status !== 0) {
+            throw new Error(`Command exited with code ${result.status}`);
+        }
+    }
+
+    /**
+     * Sanitize user input to prevent any injection attempts
+     * Only allows alphanumeric characters, underscores, hyphens, and spaces
+     */
+    private sanitizeInput(input: string): string {
+        // Remove any potentially dangerous characters
+        const sanitized = input.replace(/[^a-zA-Z0-9_\-\s.]/g, '');
+        if (sanitized !== input) {
+            console.warn(`[SECURITY] Input was sanitized: "${input}" -> "${sanitized}"`);
+        }
+        return sanitized;
+    }
+
+    /**
+     * Validate file paths to prevent path traversal attacks
+     */
+    private validatePath(filePath: string, allowedBase: string): string {
+        const resolved = path.resolve(filePath);
+        const resolvedBase = path.resolve(allowedBase);
+        
+        if (!resolved.startsWith(resolvedBase)) {
+            throw new Error(`Path traversal attempt detected: ${filePath}`);
+        }
+        return resolved;
+    }
+
     private ensureDirectories() {
         [CEREMONY_DIR, OUTPUT_DIR].forEach(dir => {
             if (!fs.existsSync(dir)) {
@@ -108,7 +151,8 @@ class RealCeremonyCoordinator {
 
         // Compile circuit to get R1CS
         console.log(' Compiling circuit...');
-        execSync(`circom ${circuitFile} --r1cs --output ${BUILD_DIR}`, { stdio: 'inherit' });
+        // SAFE: Using array-based arguments prevents command injection
+        this.safeExec('circom', [circuitFile, '--r1cs', '--output', BUILD_DIR]);
 
         // Calculate circuit hash
         const r1csFile = path.join(BUILD_DIR, `${config.circuit_name}.r1cs`);
@@ -128,7 +172,8 @@ class RealCeremonyCoordinator {
         // Generate initial zkey
         console.log(' Generating initial zkey...');
         const initialZkey = path.join(BUILD_DIR, this.state.current_zkey);
-        execSync(`snarkjs groth16 setup ${r1csFile} ${ptauFile} ${initialZkey}`, { stdio: 'inherit' });
+        // SAFE: Using array-based arguments prevents command injection
+        this.safeExec('snarkjs', ['groth16', 'setup', r1csFile, ptauFile, initialZkey]);
 
         this.state.status = 'ACCEPTING_CONTRIBUTIONS';
         this.saveState();
@@ -152,7 +197,13 @@ class RealCeremonyCoordinator {
             throw new Error('Required contributions already received');
         }
 
-        console.log(`\n Processing contribution from: ${contributor}\n`);
+        // SECURITY: Sanitize contributor name to prevent injection
+        const safeContributor = this.sanitizeInput(contributor);
+        if (!safeContributor || safeContributor.length === 0) {
+            throw new Error('Invalid contributor name after sanitization');
+        }
+
+        console.log(`\n Processing contribution from: ${safeContributor}\n`);
 
         const contributionId = this.state.contributions.length + 1;
         const inputZkey = path.join(BUILD_DIR, this.state.current_zkey);
@@ -171,8 +222,16 @@ class RealCeremonyCoordinator {
         console.log(`   Entropy Fingerprint: ${entropyFingerprint}`);
 
         // Execute snarkjs contribution
+        // SAFE: Using array-based arguments prevents command injection
         try {
-            execSync(`snarkjs zkey contribute ${inputZkey} ${outputZkey} --name="${contributor}" -e="${entropy}" -v`, { stdio: 'inherit' });
+            this.safeExec('snarkjs', [
+                'zkey', 'contribute',
+                inputZkey,
+                outputZkey,
+                `--name=${safeContributor}`,
+                `-e=${entropy}`,
+                '-v'
+            ]);
         } catch (error) {
             throw new Error(`Contribution failed: ${error}`);
         }
@@ -296,11 +355,13 @@ class RealCeremonyCoordinator {
 
         // Export verification key
         const vkPath = path.join(OUTPUT_DIR, `${this.state.config.circuit_name}_vk.json`);
-        execSync(`snarkjs zkey export verificationkey ${finalZkey} ${vkPath}`, { stdio: 'inherit' });
+        // SAFE: Using array-based arguments prevents command injection
+        this.safeExec('snarkjs', ['zkey', 'export', 'verificationkey', finalZkey, vkPath]);
 
         // Generate Solidity verifier for reference
         const solidityVerifier = path.join(OUTPUT_DIR, `${this.state.config.circuit_name}Verifier.sol`);
-        execSync(`snarkjs zkey export solidityverifier ${finalZkey} ${solidityVerifier}`, { stdio: 'inherit' });
+        // SAFE: Using array-based arguments prevents command injection
+        this.safeExec('snarkjs', ['zkey', 'export', 'solidityverifier', finalZkey, solidityVerifier]);
 
         // Create comprehensive transcript
         const transcript = {

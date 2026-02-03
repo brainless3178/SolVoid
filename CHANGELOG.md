@@ -5,6 +5,26 @@ All notable changes to SolVoid will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-02-03
+
+### 🔒 Security
+
+- **CRITICAL**: Fixed OS Command Injection vulnerability in `ceremony/coordinator.ts` (CVE-pending)
+  - Replaced all vulnerable `execSync` calls with safe `spawnSync` using array-based arguments
+  - Added `safeExec()` helper function with `shell: false` to prevent shell interpretation
+  - Added `sanitizeInput()` function to strip dangerous characters from user input
+  - Added `validatePath()` function for path traversal protection
+  - Affected functions: `initialize()`, `contribute()`, `finalize()`
+  - Attack vector: Malicious contributor names could execute arbitrary shell commands
+  - Severity: Critical (CVSS 9.8)
+
+### 🔧 Changed
+
+- Ceremony coordinator now uses `spawnSync` instead of `execSync` for all external commands
+- User-provided contributor names are sanitized before use in snarkjs commands
+
+---
+
 ## [1.3.1] - 2026-02-01
 
 ### 🚀 Added

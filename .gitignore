@@ -76,7 +76,10 @@ privacy-manifest.json
 # Passport storage
 privacy-passport.json
 
-**/ceremony/
+**/ceremony/contributions/
+**/ceremony/output/
+**/ceremony/node_modules/
+**/ceremony/dist/
 **/*.ptau
 **/*.zkey
 **/*.r1cs
