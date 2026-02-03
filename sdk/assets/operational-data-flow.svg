@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <style>
+    .box { fill:#ffffff; stroke:#2d3748; stroke-width:2; rx:6; }
+    .diamond { fill:#ffffff; stroke:#2d3748; stroke-width:2; }
+    .label { font-family: Inter, Arial, sans-serif; font-size:14px; fill:#0f172a }
+    .note { font-family: Inter, Arial, sans-serif; font-size:12px; fill:#475569 }
+    .arrow { stroke:#0f172a; stroke-width:2; fill:none; marker-end:url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- Nodes -->
+  <rect class="box" x="20" y="30" width="170" height="48" />
+  <text class="label" x="105" y="60" text-anchor="middle">Identity Layer</text>
+
+  <rect class="box" x="230" y="20" width="190" height="64" />
+  <text class="label" x="325" y="50" text-anchor="middle">ZK‑Prover Engine</text>
+  <text class="note" x="325" y="66" text-anchor="middle">(Groth16 witness)</text>
+
+  <rect class="diamond" x="460" y="24" width="120" height="56" rx="8" />
+  <text class="label" x="520" y="54" text-anchor="middle">SolVoid Vault</text>
+
+  <rect class="box" x="610" y="20" width="180" height="64" />
+  <text class="label" x="700" y="50" text-anchor="middle">Merkle Tree State</text>
+
+  <rect class="box" x="20" y="140" width="180" height="48" />
+  <text class="label" x="110" y="170" text-anchor="middle">Anonymity Recovery</text>
+
+  <rect class="box" x="230" y="140" width="170" height="48" />
+  <text class="label" x="315" y="170" text-anchor="middle">Shadow Relayer</text>
+  <text class="note" x="315" y="186" text-anchor="middle">(Onion Routing)</text>
+
+  <rect class="box" x="460" y="140" width="170" height="48" />
+  <text class="label" x="545" y="170" text-anchor="middle">On‑chain Verifier</text>
+
+  <rect class="box" x="660" y="140" width="180" height="48" />
+  <text class="label" x="750" y="170" text-anchor="middle">Fresh Destination Address</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M190 54 L230 54" />
+  <text class="note" x="210" y="46" text-anchor="middle">Shielding Transaction</text>
+
+  <path class="arrow" d="M420 52 L460 52" />
+  <text class="note" x="345" y="30" text-anchor="middle">Groth16 Witness</text>
+
+  <path class="arrow" d="M580 52 L610 52" />
+  <text class="note" x="540" y="30" text-anchor="middle">Commitment Stored</text>
+
+  <path class="arrow" d="M110 168 L230 168" />
+  <text class="note" x="170" y="160" text-anchor="middle">Withdrawal Request</text>
+
+  <path class="arrow" d="M400 168 L460 168" />
+  <text class="note" x="340" y="154" text-anchor="middle">Onion Routing</text>
+
+  <path class="arrow" d="M630 168 L660 168" />
+  <text class="note" x="645" y="154" text-anchor="middle">Proof Validated</text>
+
+  <!-- Membership proof dotted arrow -->
+  <path stroke="#0f172a" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowhead)" d="M690 72 L690 140" />
+  <text class="note" x="720" y="106" text-anchor="start">Membership Proof</text>
+
+  <!-- Small borders to improve contrast -->
+  <rect x="0" y="0" width="900" height="360" fill="none" />
+</svg>

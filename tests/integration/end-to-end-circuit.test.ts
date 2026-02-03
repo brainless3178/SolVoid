@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { 
     Keypair, 
     SystemProgram, 
@@ -115,9 +115,9 @@ describe('End-to-End Circuit Integration Test', () => {
         
         // Verify initial state
         const stateAccount = await program.account.globalState.fetch(stateKeypair.publicKey);
-        expect(stateAccount.isInitialized).to.be.true;
-        expect(stateAccount.depositAmount.toString()).to.equal(DEPOSIT_AMOUNT.toString());
-        expect(stateAccount.nextIndex.toNumber()).to.equal(0);
+        expect(stateAccount.isInitialized).toBe(true);
+        expect(stateAccount.depositAmount.toString()).toBe(DEPOSIT_AMOUNT.toString());
+        expect(stateAccount.nextIndex.toNumber()).toBe(0);
         
         console.log(' Setup phase completed successfully');
     });
@@ -153,11 +153,11 @@ describe('End-to-End Circuit Integration Test', () => {
         
         // Verify commitment added to merkle tree
         const stateAccount = await program.account.globalState.fetch(stateKeypair.publicKey);
-        expect(stateAccount.nextIndex.toNumber()).to.equal(1);
+        expect(stateAccount.nextIndex.toNumber()).toBe(1);
         
         // Verify commitment stored at correct index
         const storedCommitment = stateAccount.commitments[0];
-        expect(Buffer.from(storedCommitment)).to.deep.equal(commitment);
+        expect(Buffer.from(storedCommitment)).toEqual(commitment);
         
         console.log(' Deposit phase completed successfully');
         console.log('Commitment stored at index 0');
@@ -219,7 +219,7 @@ describe('End-to-End Circuit Integration Test', () => {
         console.log('Withdrawal transaction signature:', withdrawalTx);
         
         // Verify proof verification succeeded by checking transaction didn't fail
-        expect(withdrawalTx).to.be.a('string');
+        expect(withdrawalTx).toEqual(expect.any(String));
         
         // Verify funds transferred correctly
         const recipientBalance = await provider.connection.getBalance(recipient.publicKey);
@@ -231,7 +231,7 @@ describe('End-to-End Circuit Integration Test', () => {
         const nullifierFound = nullifierSetAccount.nullifiers.some(
             (entry: any) => Buffer.from(entry.nullifier).equals(nullifier)
         );
-        expect(nullifierFound).to.be.true;
+        expect(nullifierFound).toBe(true);
         
         console.log(' Withdrawal phase completed successfully');
         console.log('Funds transferred to recipient');
@@ -263,7 +263,7 @@ describe('End-to-End Circuit Integration Test', () => {
                 .signers([payer])
                 .rpc();
             
-            expect.fail('Double withdrawal should have failed');
+            throw new Error('Double withdrawal should have failed');
         } catch (error) {
             // Verify second withdrawal rejected with NullifierAlreadyUsed
             expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
@@ -284,9 +284,9 @@ describe('End-to-End Circuit Integration Test', () => {
         console.log('- Merkle root:', Buffer.from(stateAccount.root).toString('hex'));
         
         // Verify lifecycle completed correctly
-        expect(stateAccount.totalDeposits.toNumber()).to.equal(1);
-        expect(stateAccount.totalWithdrawn.toNumber()).to.equal(1);
-        expect(nullifierSetAccount.nullifiers.length).to.equal(1);
+        expect(stateAccount.totalDeposits.toNumber()).toBe(1);
+        expect(stateAccount.totalWithdrawn.toNumber()).toBe(1);
+        expect(nullifierSetAccount.nullifiers.length).toBe(1);
         
         console.log(' Complete privacy lifecycle verified successfully');
     });

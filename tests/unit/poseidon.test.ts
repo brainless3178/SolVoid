@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { PoseidonHasher, PoseidonUtils } from '../../sdk/crypto/poseidon';
 
 describe('Poseidon Hash Implementation', () => {
@@ -10,7 +10,7 @@ describe('Poseidon Hash Implementation', () => {
             const hash1a = await PoseidonHasher.hashTwoInputs(input1, input2);
             const hash1b = await PoseidonHasher.hashTwoInputs(input1, input2);
 
-            expect(PoseidonUtils.bufferToHex(hash1a)).to.equal(PoseidonUtils.bufferToHex(hash1b));
+            expect(PoseidonUtils.bufferToHex(hash1a)).toBe(PoseidonUtils.bufferToHex(hash1b));
         });
 
         it('Should produce different hashes for different inputs', async () => {
@@ -22,7 +22,7 @@ describe('Poseidon Hash Implementation', () => {
             const hash1 = await PoseidonHasher.hashTwoInputs(input1a, input1b);
             const hash2 = await PoseidonHasher.hashTwoInputs(input2a, input2b);
 
-            expect(PoseidonUtils.bufferToHex(hash1)).to.not.equal(PoseidonUtils.bufferToHex(hash2));
+            expect(PoseidonUtils.bufferToHex(hash1)).not.toBe(PoseidonUtils.bufferToHex(hash2));
         });
     });
 
@@ -33,7 +33,7 @@ describe('Poseidon Hash Implementation', () => {
 
             const hash = await PoseidonHasher.hashTwoInputs(input1, input2);
 
-            expect(hash).to.have.length(32);
+            expect(hash).toHaveLength(32);
         });
 
         it('Should handle zero inputs', async () => {
@@ -41,8 +41,8 @@ describe('Poseidon Hash Implementation', () => {
 
             const hash = await PoseidonHasher.hashTwoInputs(zero, zero);
 
-            expect(hash).to.have.length(32);
-            expect(PoseidonUtils.bufferToHex(hash)).to.not.equal('00'.repeat(32));
+            expect(hash).toHaveLength(32);
+            expect(PoseidonUtils.bufferToHex(hash)).not.toBe('00'.repeat(32));
         });
 
         it('Should be deterministic', async () => {
@@ -52,7 +52,7 @@ describe('Poseidon Hash Implementation', () => {
             const hash1 = await PoseidonHasher.hashTwoInputs(input1, input2);
             const hash2 = await PoseidonHasher.hashTwoInputs(input1, input2);
 
-            expect(PoseidonUtils.bufferToHex(hash1)).to.equal(PoseidonUtils.bufferToHex(hash2));
+            expect(PoseidonUtils.bufferToHex(hash1)).toBe(PoseidonUtils.bufferToHex(hash2));
         });
     });
 
@@ -63,8 +63,8 @@ describe('Poseidon Hash Implementation', () => {
 
             const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, 1000000n);
 
-            expect(commitment).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(commitment)).to.be.true;
+            expect(commitment).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(commitment)).toBe(true);
         });
 
         it('Should generate different commitments for different inputs', async () => {
@@ -75,7 +75,7 @@ describe('Poseidon Hash Implementation', () => {
             const commitment1 = await PoseidonHasher.computeCommitment(secret1, nullifier, 1000000n);
             const commitment2 = await PoseidonHasher.computeCommitment(secret2, nullifier, 1000000n);
 
-            expect(PoseidonUtils.bufferToHex(commitment1)).to.not.equal(PoseidonUtils.bufferToHex(commitment2));
+            expect(PoseidonUtils.bufferToHex(commitment1)).not.toBe(PoseidonUtils.bufferToHex(commitment2));
         });
     });
 
@@ -85,8 +85,8 @@ describe('Poseidon Hash Implementation', () => {
 
             const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
 
-            expect(nullifierHash).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(nullifierHash)).to.be.true;
+            expect(nullifierHash).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(nullifierHash)).toBe(true);
         });
 
         it('Should produce deterministic nullifier hashes', async () => {
@@ -95,7 +95,7 @@ describe('Poseidon Hash Implementation', () => {
             const hash1 = await PoseidonHasher.computeNullifierHash(nullifier);
             const hash2 = await PoseidonHasher.computeNullifierHash(nullifier);
 
-            expect(PoseidonUtils.bufferToHex(hash1)).to.equal(PoseidonUtils.bufferToHex(hash2));
+            expect(PoseidonUtils.bufferToHex(hash1)).toBe(PoseidonUtils.bufferToHex(hash2));
         });
     });
 
@@ -113,8 +113,8 @@ describe('Poseidon Hash Implementation', () => {
             const right = await PoseidonHasher.hashTwoInputs(leaves[2], leaves[3]);
             const root = await PoseidonHasher.hashTwoInputs(left, right);
 
-            expect(root).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(root)).to.be.true;
+            expect(root).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(root)).toBe(true);
         });
 
         it('Should handle Merkle proof verification', async () => {
@@ -124,8 +124,8 @@ describe('Poseidon Hash Implementation', () => {
 
             const root = await PoseidonHasher.computeMerkleRoot(leaf, [sibling], indices);
 
-            expect(root).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(root)).to.be.true;
+            expect(root).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(root)).toBe(true);
         });
     });
 
@@ -134,8 +134,8 @@ describe('Poseidon Hash Implementation', () => {
             const validHash = PoseidonUtils.hexToBuffer('1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef');
             const invalidHash = Buffer.alloc(33); // Wrong size
 
-            expect(PoseidonHasher.verifyFieldCompatibility(validHash)).to.be.true;
-            expect(PoseidonHasher.verifyFieldCompatibility(invalidHash)).to.be.false;
+            expect(PoseidonHasher.verifyFieldCompatibility(validHash)).toBe(true);
+            expect(PoseidonHasher.verifyFieldCompatibility(invalidHash)).toBe(false);
         });
     });
 
@@ -145,22 +145,22 @@ describe('Poseidon Hash Implementation', () => {
             const buffer = PoseidonUtils.hexToBuffer(hex);
             const backToHex = PoseidonUtils.bufferToHex(buffer);
 
-            expect(backToHex).to.equal(hex);
+            expect(backToHex).toBe(hex);
         });
 
         it('Should validate hex strings correctly', () => {
             const validHex = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
             const invalidHex = 'xyz123'; // Invalid characters
 
-            expect(() => PoseidonUtils.hexToBuffer(validHex)).to.not.throw();
-            expect(() => PoseidonUtils.hexToBuffer(invalidHex)).to.throw();
+            expect(() => PoseidonUtils.hexToBuffer(validHex)).not.toThrow();
+            expect(() => PoseidonUtils.hexToBuffer(invalidHex)).toThrow();
         });
 
         it('Should create zero buffers correctly', () => {
             const zero = PoseidonUtils.zeroBuffer();
 
-            expect(zero).to.have.length(32);
-            expect(PoseidonUtils.bufferToHex(zero)).to.equal('00'.repeat(32));
+            expect(zero).toHaveLength(32);
+            expect(PoseidonUtils.bufferToHex(zero)).toBe('00'.repeat(32));
         });
     });
 });

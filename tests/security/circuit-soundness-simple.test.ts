@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 
@@ -27,7 +27,7 @@ describe(' Circuit Soundness Test', () => {
         
         try {
             const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, fakeProof);
-            expect(isValid).to.be.false;
+            expect(isValid).toBe(false);
             console.log(' Invalid proof rejected');
         } catch (error) {
             console.log(' Invalid proof caused error (expected)');

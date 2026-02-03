@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { buildPoseidon } from 'circomlibjs';
 import fs from 'fs';
 import { execSync } from 'child_process';
@@ -68,7 +68,7 @@ describe('Cross-Component Hash Verification', () => {
                 console.log(`  Expected: ${vector.expected}`);
                 console.log(`  Got:      ${resultHex}`);
 
-                expect(resultHex).to.equal(vector.expected);
+                expect(resultHex).toBe(vector.expected);
             }
 
             console.log(' All official test vectors validated');
@@ -91,7 +91,7 @@ describe('Cross-Component Hash Verification', () => {
                 console.log(`  Expected root: ${vector.expectedRoot}`);
                 console.log(`  Got root:      ${rootHex}`);
 
-                expect(rootHex).to.equal(vector.expectedRoot);
+                expect(rootHex).toBe(vector.expectedRoot);
             }
 
             console.log(' All merkle tree test vectors validated');
@@ -184,8 +184,8 @@ describe('Cross-Component Hash Verification', () => {
 
                 // If all components are available, they should match
                 if (rustResult !== tsHex && circomResult !== tsHex) {
-                    expect(tsHex).to.equal(rustResult);
-                    expect(tsHex).to.equal(circomResult);
+                    expect(tsHex).toBe(rustResult);
+                    expect(tsHex).toBe(circomResult);
                 }
             }
 
@@ -236,7 +236,7 @@ describe('Cross-Component Hash Verification', () => {
 
                 // If both components are available, they should match
                 if (rustRoot !== tsHex) {
-                    expect(tsHex).to.equal(rustRoot);
+                    expect(tsHex).toBe(rustRoot);
                 }
             }
 
@@ -265,12 +265,12 @@ describe('Cross-Component Hash Verification', () => {
 
                 // For CI, we just verify the format and that it produces consistent results
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
-                expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
+                expect(resultHex.length).toBe(66); // 0x + 64 hex chars
 
                 // Verify deterministic behavior
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
-                expect(resultHex).to.equal(resultHex2);
+                expect(resultHex).toBe(resultHex2);
             }
 
             console.log(' Critical hash verification passed - build can proceed');
@@ -292,12 +292,12 @@ describe('Cross-Component Hash Verification', () => {
 
                 // Ensure no floating point artifacts
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
-                expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
+                expect(resultHex.length).toBe(66); // 0x + 64 hex chars
 
                 // Ensure deterministic results
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
-                expect(resultHex).to.equal(resultHex2);
+                expect(resultHex).toBe(resultHex2);
             }
 
             console.log(' No floating point or rounding differences detected');
@@ -327,12 +327,12 @@ describe('Cross-Component Hash Verification', () => {
 
                 // For regression testing, we verify format and consistency
                 expect(resultHex).to.match(/^0x[a-fA-F0-9]{64}$/);
-                expect(resultHex.length).to.equal(66); // 0x + 64 hex chars
+                expect(resultHex.length).toBe(66); // 0x + 64 hex chars
 
                 // Verify deterministic behavior
                 const result2 = poseidon(inputsBigInt);
                 const resultHex2 = poseidonResultToHex(result2);
-                expect(resultHex).to.equal(resultHex2);
+                expect(resultHex).toBe(resultHex2);
             }
 
             console.log(' Regression tests passed - no cryptographic drift detected');

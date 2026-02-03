@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { buildPoseidon } from 'circomlibjs';
 
 describe('Debug Poseidon', () => {
@@ -23,6 +23,6 @@ describe('Debug Poseidon', () => {
             console.log('Default conversion:', resultStr);
         }
         
-        expect(true).to.be.true;
+        expect(true).toBe(true);
     });
 });

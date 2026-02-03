@@ -11,7 +11,7 @@ import {
     Wallet,
     BN
 } from '@coral-xyz/anchor';
-import { expect } from 'chai';
+// Jest provides expect globally
 import { PrivacyShield } from '../../sdk/privacy/shield';
 import { SolVoidClient } from '../../sdk/client';
 
@@ -188,7 +188,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
 
             // Verify state account
             const stateAccount = await (program.account as any).programState.fetch(statePda);
-            expect(stateAccount.leafCount.toNumber()).to.equal(0);
+            expect(stateAccount.leafCount.toNumber()).toBe(0);
         });
     });
 
@@ -196,10 +196,10 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
         it('Should generate valid commitment data', async () => {
             const commitment = await privacyShield.generateCommitment();
 
-            expect(commitment.secret).to.be.a('string');
-            expect(commitment.nullifier).to.be.a('string');
-            expect(commitment.commitment).to.be.a('string');
-            expect(commitment.nullifierHash).to.be.a('string');
+            expect(commitment.secret).toEqual(expect.any(String));
+            expect(commitment.nullifier).toEqual(expect.any(String));
+            expect(commitment.commitment).toEqual(expect.any(String));
+            expect(commitment.nullifierHash).toEqual(expect.any(String));
 
             // Verify hex format
             expect(commitment.secret).to.match(/^[0-9a-fA-F]{64}$/);
@@ -212,8 +212,8 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
             const commitment1 = await privacyShield.generateCommitment();
             const commitment2 = await privacyShield.generateCommitment();
 
-            expect(commitment1.commitment).to.not.equal(commitment2.commitment);
-            expect(commitment1.nullifierHash).to.not.equal(commitment2.nullifierHash);
+            expect(commitment1.commitment).not.toBe(commitment2.commitment);
+            expect(commitment1.nullifierHash).not.toBe(commitment2.nullifierHash);
         });
     });
 
@@ -226,7 +226,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
 
             // Verify state updated
             const stateAccount = await (program.account as any).programState.fetch(statePda);
-            expect(stateAccount.leafCount.toNumber()).to.equal(1);
+            expect(stateAccount.leafCount.toNumber()).toBe(1);
 
             // Store commitment for withdrawal test
             return commitment;
@@ -235,7 +235,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
         it('Should reject invalid commitment format', async () => {
             try {
                 await privacyShield.deposit('invalid_hex', 1 * LAMPORTS_PER_SOL);
-                expect.fail('Should have thrown error');
+                throw new Error('Should have thrown error');
             } catch (error: any) {
                 expect(error.message).to.include('Invalid commitment format');
             }
@@ -259,8 +259,8 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
         it('Should generate valid Merkle proofs', async () => {
             const proof = await privacyShield.getMerkleProof(2, commitments);
 
-            expect(proof.proof).to.have.length(20); // MERKLE_TREE_DEPTH
-            expect(proof.indices).to.have.length(20);
+            expect(proof.proof).toHaveLength(20); // MERKLE_TREE_DEPTH
+            expect(proof.indices).toHaveLength(20);
 
             // Verify indices are binary
             proof.indices.forEach(index => {
@@ -271,7 +271,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
         it('Should reject invalid commitment index', async () => {
             try {
                 await privacyShield.getMerkleProof(10, commitments);
-                expect.fail('Should have thrown error');
+                throw new Error('Should have thrown error');
             } catch (error: any) {
                 expect(error.message).to.include('out of range');
             }
@@ -291,8 +291,8 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
                 ]
             };
 
-            expect(mockProof.proof).to.have.length(192);
-            expect(mockProof.publicSignals).to.have.length(2);
+            expect(mockProof.proof).toHaveLength(192);
+            expect(mockProof.publicSignals).toHaveLength(2);
         });
     });
 
@@ -341,7 +341,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
                     1 * LAMPORTS_PER_SOL
                 );
 
-                expect.fail('Should have thrown error');
+                throw new Error('Should have thrown error');
             } catch (error: any) {
                 expect(error.message).to.include('Invalid fee');
             }
@@ -385,7 +385,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
                     1 * LAMPORTS_PER_SOL
                 );
 
-                expect.fail('Should have thrown double-spend error');
+                throw new Error('Should have thrown double-spend error');
             } catch (error: any) {
                 expect(error.message).to.include('Nullifier already spent');
             }
@@ -409,7 +409,7 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
                     1 * LAMPORTS_PER_SOL
                 );
 
-                expect.fail('Should have thrown excessive fee error');
+                throw new Error('Should have thrown excessive fee error');
             } catch (error: any) {
                 expect(error.message).to.include('Fee exceeds');
             }
@@ -420,13 +420,13 @@ describe('SolVoid ZK Privacy Integration Tests', () => {
         it('Should analyze wallet privacy', async () => {
             const analysis = await solvoidClient.protect(user.publicKey);
 
-            expect(analysis).to.be.an('array');
+            expect(analysis).toBeInstanceOf(Array);
 
             if (analysis.length > 0) {
                 const result = analysis[0];
                 expect(result).to.have.property('privacyScore');
                 expect(result).to.have.property('leaks');
-                expect(result.privacyScore).to.be.a('number');
+                expect(result.privacyScore).toEqual(expect.any(Number));
                 expect(result.privacyScore).to.be.within(0, 100);
             }
         });

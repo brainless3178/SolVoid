@@ -2,7 +2,7 @@
  * Basic Security Test - Validates our security testing framework
  */
 
-import { expect } from 'chai';
+// Jest provides expect globally
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 
@@ -16,7 +16,7 @@ describe(' Basic Security Framework Test', () => {
             ];
             
             requiredFiles.forEach(file => {
-                expect(fs.existsSync(file), `Missing ${file}`).to.be.true;
+                expect(fs.existsSync(file), `Missing ${file}`).toBe(true);
             });
         });
 
@@ -63,7 +63,7 @@ describe(' Basic Security Framework Test', () => {
             
             try {
                 const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, invalidProof);
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Invalid proof correctly rejected');
             } catch (error) {
                 console.log(' Invalid proof caused verification error (expected)');
@@ -82,24 +82,24 @@ describe(' Basic Security Framework Test', () => {
             ];
             
             securityTests.forEach(test => {
-                expect(fs.existsSync(test), `Missing security test: ${test}`).to.be.true;
+                expect(fs.existsSync(test), `Missing security test: ${test}`).toBe(true);
             });
             
             console.log(' All security test files present');
         });
 
         it('Should have security validation script', () => {
-            expect(fs.existsSync('scripts/security-validation.sh')).to.be.true;
+            expect(fs.existsSync('scripts/security-validation.sh')).toBe(true);
             console.log(' Security validation script present');
         });
 
         it('Should have trust assumptions document', () => {
-            expect(fs.existsSync('TRUST_ASSUMPTIONS_FREEZE.md')).to.be.true;
+            expect(fs.existsSync('TRUST_ASSUMPTIONS_FREEZE.md')).toBe(true);
             console.log(' Trust assumptions document present');
         });
 
         it('Should have mainnet launch checklist', () => {
-            expect(fs.existsSync('MAINNET_LAUNCH_CHECKLIST.md')).to.be.true;
+            expect(fs.existsSync('MAINNET_LAUNCH_CHECKLIST.md')).toBe(true);
             console.log(' Mainnet launch checklist present');
         });
     });
@@ -113,7 +113,7 @@ describe(' Basic Security Framework Test', () => {
             
             docs.forEach(doc => {
                 const content = fs.readFileSync(doc, 'utf8');
-                expect(content.length).to.be.greaterThan(1000); // Substantial content
+                expect(content.length.toBeGreaterThan(1000); // Substantial content
             });
             
             console.log(' Security documentation is comprehensive');

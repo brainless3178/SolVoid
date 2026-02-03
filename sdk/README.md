@@ -25,16 +25,11 @@ While this package provides the SDK, SolVoid is a multi-layered privacy infrastr
 SolVoid orchestrates a multi-layered privacy lifecycle (PLM) that decouples on-chain identities from their transaction history while maintaining full protocol verifiability.
 
 ### Operational Data Flow
-```mermaid
-graph TD
-    A[Identity Layer] -->|Shielding Transaction| B(ZK-Prover Engine)
-    B -->|Groth16 Witness| C{SolVoid Vault}
-    C -->|Commitment Stored| D[Merkle Tree State]
-    E[Anonymity Recovery] -->|Withdrawal Request| F(Shadow Relayer)
-    F -->|Onion Routing| G(On-chain Verifier)
-    G -->|Proof Validated| H[Fresh Destination Address]
-    D -.->|Membership Proof| G
-```
+<div align="center">
+    <img src="./assets/operational-data-flow.svg" alt="Operational Data Flow" width="900">
+</div>
+
+> Note: The diagram above is provided as a static image so it renders consistently on npm and other markdown renderers that do not support Mermaid.
 
 ---
 

@@ -11,7 +11,7 @@
  * - Signature forgery attempt
  */
 
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import { Program, AnchorProvider, web3, BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Keypair, Transaction } from '@solana/web3.js';
 import fs from 'fs';
@@ -31,7 +31,7 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
     // Test data
     const DEPOSIT_AMOUNT = new BN(1_000_000_000); // 1 SOL
     
-    before(async () => {
+    beforeAll(async () => {
         // Setup program
         const idl = JSON.parse(fs.readFileSync('./target/idl/solvoid.json', 'utf8'));
         program = new Program(idl, provider);
@@ -94,10 +94,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                 const replaySignature = await connection.sendRawTransaction(originalTx.serialize());
                 await connection.confirmTransaction(replaySignature);
                 
-                expect.fail('Should have rejected replayed transaction');
+                throw new Error('Should have rejected replayed transaction');
             } catch (error: any) {
-                expect(error.toString()).to.include('already processed') || 
-                       expect(error.toString()).to.include('duplicate');
+                expect(error.toString()).toContain('already processed') || 
+                       expect(error.toString()).toContain('duplicate');
                 console.log(' Transaction replay prevented');
             }
         });
@@ -158,10 +158,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                 const sig2 = await connection.sendRawTransaction(withdrawTx.serialize());
                 await connection.confirmTransaction(sig2);
                 
-                expect.fail('Should have prevented withdrawal replay');
+                throw new Error('Should have prevented withdrawal replay');
             } catch (error: any) {
-                expect(error.toString()).to.include('already spent') ||
-                       expect(error.toString()).to.include('nullifier');
+                expect(error.toString()).toContain('already spent') ||
+                       expect(error.toString()).toContain('nullifier');
                 console.log(' Withdrawal replay prevented');
             }
         });
@@ -202,10 +202,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                     .signers([maliciousRelayer])
                     .rpc();
                 
-                expect.fail('Should have rejected excessive fee');
+                throw new Error('Should have rejected excessive fee');
             } catch (error: any) {
-                expect(error.toString()).to.include('fee') ||
-                       expect(error.toString()).to.include('excessive');
+                expect(error.toString()).toContain('fee') ||
+                       expect(error.toString()).toContain('excessive');
                 console.log(' Excessive fee prevented');
             }
         });
@@ -240,10 +240,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                     .signers([maliciousRelayer])
                     .rpc();
                 
-                expect.fail('Should have rejected negative fee');
+                throw new Error('Should have rejected negative fee');
             } catch (error: any) {
-                expect(error.toString()).to.include('fee') ||
-                       expect(error.toString()).to.include('negative');
+                expect(error.toString()).toContain('fee') ||
+                       expect(error.toString()).toContain('negative');
                 console.log(' Negative fee prevented');
             }
         });
@@ -285,10 +285,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                     .signers([maliciousRelayer])
                     .rpc();
                 
-                expect.fail('Should have rejected corrupted proof');
+                throw new Error('Should have rejected corrupted proof');
             } catch (error: any) {
-                expect(error.toString()).to.include('proof') ||
-                       expect(error.toString()).to.include('invalid');
+                expect(error.toString()).toContain('proof') ||
+                       expect(error.toString()).toContain('invalid');
                 console.log(' Corrupted proof rejected');
             }
         });
@@ -324,10 +324,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
                     .signers([maliciousRelayer])
                     .rpc();
                 
-                expect.fail('Should have rejected malformed root');
+                throw new Error('Should have rejected malformed root');
             } catch (error: any) {
-                expect(error.toString()).to.include('invalid') ||
-                       expect(error.toString()).to.include('length');
+                expect(error.toString()).toContain('invalid') ||
+                       expect(error.toString()).toContain('length');
                 console.log(' Malformed root rejected');
             }
         });
@@ -440,7 +440,7 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             
             // Verify state is still consistent
             const finalState = await program.account.globalState.fetch(statePDA) as any;
-            expect(finalState.nextIndex.toNumber()).to.be.greaterThan(0);
+            expect(finalState.nextIndex.toNumber()).toBeGreaterThan(0);
             
             console.log(' State consistency preserved under rapid submissions');
         });
@@ -471,10 +471,10 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
             const stateAfter = await program.account.globalState.fetch(statePDA) as any;
             
             // State should either be unchanged or consistently updated
-            expect(stateAfter.nextIndex.toNumber()).to.be.greaterThanOrEqual(initialIndex);
+            expect(stateAfter.nextIndex.toNumber()).toBeGreaterThanOrEqual(initialIndex);
             
             // Other state should remain consistent
-            expect(stateAfter.isInitialized).to.equal(stateBefore.isInitialized);
+            expect(stateAfter.isInitialized).toBe(stateBefore.isInitialized);
             
             console.log(' No state corruption from partial failures');
         });
@@ -493,7 +493,7 @@ describe(' Relayer Adversarial Testing - ASSUME HOSTILE RELAYERS', () => {
         });
     });
 
-    after(() => {
+    afterAll(() => {
         console.log('\n RELAYER ADVERSARIAL TESTS COMPLETE');
         console.log(' CRITICAL: Relayers must be INCAPABLE of stealing, even if malicious');
         console.log(' All relayer attacks prevented');

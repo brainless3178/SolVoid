@@ -10,7 +10,7 @@
  * - Fee immutability
  */
 
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import { Program, AnchorProvider, web3, BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Keypair } from '@solana/web3.js';
 import fs from 'fs';
@@ -35,7 +35,7 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
     let initialTotalDeposits: BN;
     let initialTotalWithdrawn: BN;
     
-    before(async () => {
+    beforeAll(async () => {
         // Setup program
         const idl = JSON.parse(fs.readFileSync('./target/idl/solvoid.json', 'utf8'));
         program = new Program(idl, provider);
@@ -105,12 +105,12 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
                 const stateAfter = await program.account.globalState.fetch(statePDA) as any;
                 
                 // INVARIANT: next_index must increase by exactly 1
-                expect(stateAfter.nextIndex.toNumber()).to.equal(stateBefore.nextIndex.toNumber() + 1);
+                expect(stateAfter.nextIndex.toNumber()).toBe(stateBefore.nextIndex.toNumber() + 1);
             }
             
             // Verify monotonic progression
             for (let i = 1; i < indexProgression.length; i++) {
-                expect(indexProgression[i]).to.equal(indexProgression[i-1] + 1);
+                expect(indexProgression[i]).toBe(indexProgression[i-1] + 1);
             }
             
             console.log(' next_index monotonicity preserved');
@@ -150,8 +150,8 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             const endIndex = stateAfter.nextIndex.toNumber();
             
             // INVARIANT: next_index must be exactly startIndex + successful
-            expect(endIndex).to.equal(startIndex + successful);
-            expect(endIndex).to.be.greaterThan(startIndex);
+            expect(endIndex).toBe(startIndex + successful);
+            expect(endIndex).toBeGreaterThan(startIndex);
             
             console.log(` Concurrent deposits: ${successful}/${numConcurrent} successful, next_index monotonic`);
         });
@@ -183,11 +183,11 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             const finalHistory = stateAfter.rootHistory;
             
             // INVARIANT: History index should only increase
-            expect(finalHistoryIndex).to.be.greaterThanOrEqual(initialHistoryIndex);
+            expect(finalHistoryIndex).toBeGreaterThanOrEqual(initialHistoryIndex);
             
             // INVARIANT: Initial history entries should be unchanged
             for (let i = 0; i < initialHistory.length; i++) {
-                expect(finalHistory[i]).to.deep.equal(initialHistory[i]);
+                expect(finalHistory[i]).toEqual(initialHistory[i]);
             }
             
             // INVARIANT: New entries should only be appended
@@ -298,10 +298,10 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
                     })
                     .rpc();
                 
-                expect.fail('Should have failed with nullifier already spent');
+                throw new Error('Should have failed with nullifier already spent');
             } catch (error: any) {
-                expect(error.toString()).to.include('already spent') || 
-                       expect(error.toString()).to.include('nullifier');
+                expect(error.toString()).toContain('already spent') || 
+                       expect(error.toString()).toContain('nullifier');
                 console.log(' Double-spending prevented');
             }
         });
@@ -323,7 +323,7 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
                 // Check nullifier record doesn't exist initially
                 try {
                     await program.account.nullifierRecord.fetch(nullifierPDA);
-                    expect.fail('Nullifier record should not exist yet');
+                    throw new Error('Nullifier record should not exist yet');
                 } catch (error) {
                     // Expected - record doesn't exist
                 }
@@ -338,9 +338,9 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             
             // Check fee structure
-            expect(state.feeStructure).to.exist;
-            expect(state.feeStructure.baseFee).to.be.greaterThan(0);
-            expect(state.feeStructure.percentageFee).to.be.greaterThan(0);
+            expect(state.feeStructure).toBeDefined();
+            expect(state.feeStructure.baseFee).toBeGreaterThan(0);
+            expect(state.feeStructure.percentageFee).toBeGreaterThan(0);
             
             // Try to manipulate fee through unauthorized means
             // This test depends on the specific fee implementation
@@ -354,13 +354,13 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             const maxFeePercentage = 100; // 1% max
             const baseFee = state.feeStructure?.baseFee || new BN(1000000);
             
-            expect(baseFee.toNumber()).to.be.greaterThan(0);
+            expect(baseFee.toNumber()).toBeGreaterThan(0);
             
             // Fee should be reasonable (not more than 1% of min deposit)
             const minDeposit = new BN(100000000); // 0.1 SOL
             const maxAllowedFee = minDeposit.div(new BN(100)); // 1%
             
-            expect(baseFee).to.be.lessThan(maxAllowedFee);
+            expect(baseFee).toBeLessThan(maxAllowedFee);
             
             console.log(' Fee limits enforced');
         });
@@ -374,7 +374,7 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             const totalWithdrawn = state.totalWithdrawn || new BN(0);
             
             // INVARIANT: Total withdrawn can never exceed total deposited
-            expect(totalDeposits.toNumber()).to.be.greaterThanOrEqual(totalWithdrawn.toNumber());
+            expect(totalDeposits.toNumber()).toBeGreaterThanOrEqual(totalWithdrawn.toNumber());
             
             console.log(` Economic invariant: ${totalDeposits.toString()} deposited >= ${totalWithdrawn.toString()} withdrawn`);
         });
@@ -390,7 +390,7 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             // INVARIANT: Vault balance should equal deposits - withdrawals
             // Allow small variance due to transaction fees
             const variance = 10000000; // 0.01 SOL variance
-            expect(Math.abs(vaultBalance - expectedBalance.toNumber())).to.be.lessThan(variance);
+            expect(Math.abs(vaultBalance - expectedBalance.toNumber())).toBeLessThan(variance);
             
             console.log(` Vault balance consistent: ${vaultBalance} ≈ ${expectedBalance.toString()}`);
         });
@@ -437,14 +437,14 @@ describe(' State Invariant Testing - ATTACK STATE MACHINE', () => {
             // Verify invariants still hold
             const finalState = await program.account.globalState.fetch(statePDA) as any;
             
-            expect(finalState.nextIndex.toNumber()).to.be.greaterThanOrEqual(initialNextIndex.toNumber());
-            expect(finalState.totalDeposits?.toNumber() || 0).to.be.greaterThanOrEqual(finalState.totalWithdrawn?.toNumber() || 0);
+            expect(finalState.nextIndex.toNumber()).toBeGreaterThanOrEqual(initialNextIndex.toNumber());
+            expect(finalState.totalDeposits?.toNumber() || 0).toBeGreaterThanOrEqual(finalState.totalWithdrawn?.toNumber() || 0);
             
             console.log(` State invariants preserved under stress: ${successful}/${numOperations} operations`);
         });
     });
 
-    after(() => {
+    afterAll(() => {
         console.log('\n STATE INVARIANT TESTS COMPLETE');
         console.log(' CRITICAL: If ANY invariant broke, PROTOCOL IS UNSAFE');
         console.log(' All invariants preserved under attack');

@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import { buildPoseidon } from 'circomlibjs';
 import { groth16 } from 'snarkjs';
 import { 
@@ -167,9 +167,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Proof with wrong public inputs should have failed');
+                throw new Error('Proof with wrong public inputs should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidProof');
+                expect((error as Error).toString()).toContain('InvalidProof');
                 console.log(' Proof with wrong public inputs correctly rejected');
             }
         });
@@ -226,9 +226,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Proof for different merkle root should have failed');
+                throw new Error('Proof for different merkle root should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidMerkleRoot');
+                expect((error as Error).toString()).toContain('InvalidMerkleRoot');
                 console.log(' Proof for different merkle root correctly rejected');
             }
         });
@@ -281,9 +281,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Replayed proof should have failed');
+                throw new Error('Replayed proof should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
+                expect((error as Error).toString()).toContain('NullifierAlreadyUsed');
                 console.log(' Replayed proof correctly rejected');
             }
         });
@@ -316,9 +316,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Proof with corrupted signature should have failed');
+                throw new Error('Proof with corrupted signature should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidProof');
+                expect((error as Error).toString()).toContain('InvalidProof');
                 console.log(' Proof with corrupted signature correctly rejected');
             }
         });
@@ -410,9 +410,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Double-spend with same nullifier should have failed');
+                throw new Error('Double-spend with same nullifier should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
+                expect((error as Error).toString()).toContain('NullifierAlreadyUsed');
                 console.log(' Double-spend with same nullifier correctly rejected');
             }
         });
@@ -469,9 +469,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Withdrawal with nullifier from different commitment should have failed');
+                throw new Error('Withdrawal with nullifier from different commitment should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidProof');
+                expect((error as Error).toString()).toContain('InvalidProof');
                 console.log(' Withdrawal with nullifier from different commitment correctly rejected');
             }
         });
@@ -508,9 +508,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Withdrawal exceeding vault balance should have failed');
+                throw new Error('Withdrawal exceeding vault balance should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InsufficientVaultBalance');
+                expect((error as Error).toString()).toContain('InsufficientVaultBalance');
                 console.log(' Withdrawal exceeding vault balance correctly rejected');
             }
         });
@@ -537,9 +537,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Excessive emergency multiplier should have failed');
+                throw new Error('Excessive emergency multiplier should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidEmergencyMultiplier');
+                expect((error as Error).toString()).toContain('InvalidEmergencyMultiplier');
                 console.log(' Excessive emergency multiplier correctly rejected');
             }
             
@@ -599,9 +599,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Zero amount withdrawal should have failed');
+                throw new Error('Zero amount withdrawal should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidAmount');
+                expect((error as Error).toString()).toContain('InvalidAmount');
                 console.log(' Zero amount withdrawal correctly rejected');
             }
             
@@ -629,9 +629,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Negative amount withdrawal should have failed');
+                throw new Error('Negative amount withdrawal should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidAmount');
+                expect((error as Error).toString()).toContain('InvalidAmount');
                 console.log(' Negative amount withdrawal correctly rejected');
             }
         });
@@ -664,9 +664,9 @@ describe('Security Test Suite', () => {
                     .signers([attacker]) // Wrong signer
                     .rpc();
                     
-                expect.fail('Relay request without proper signature should have failed');
+                throw new Error('Relay request without proper signature should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidRelayer');
+                expect((error as Error).toString()).toContain('InvalidRelayer');
                 console.log(' Relay request without proper signature correctly rejected');
             }
         });
@@ -684,9 +684,9 @@ describe('Security Test Suite', () => {
                     .signers([attacker]) // Wrong signer
                     .rpc();
                     
-                expect.fail('Relay request with signature from wrong key should have failed');
+                throw new Error('Relay request with signature from wrong key should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidAuthority');
+                expect((error as Error).toString()).toContain('InvalidAuthority');
                 console.log(' Relay request with signature from wrong key correctly rejected');
             }
         });
@@ -707,7 +707,7 @@ describe('Security Test Suite', () => {
                 const currentTime = Math.floor(Date.now() / 1000);
                 const transactionAge = currentTime - oldTimestamp;
                 
-                expect(transactionAge).to.be.greaterThan(600); // 10 minutes
+                expect(transactionAge).toBeGreaterThan(600); // 10 minutes
                 console.log(' Expired transaction would be rejected');
             } catch (error) {
                 console.log('Expired transaction test failed:', error);
@@ -762,9 +762,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Replay of old transaction should have failed');
+                throw new Error('Replay of old transaction should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('NullifierAlreadyUsed');
+                expect((error as Error).toString()).toContain('NullifierAlreadyUsed');
                 console.log(' Replay of old transaction correctly rejected');
             }
         });
@@ -798,9 +798,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Overflow attack should have failed');
+                throw new Error('Overflow attack should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('ArithmeticError');
+                expect((error as Error).toString()).toContain('ArithmeticError');
                 console.log(' Overflow attack correctly rejected');
             }
         });
@@ -864,9 +864,9 @@ describe('Security Test Suite', () => {
                     .signers([payer])
                     .rpc();
                     
-                expect.fail('Malformed input attack should have failed');
+                throw new Error('Malformed input attack should have failed');
             } catch (error) {
-                expect((error as Error).toString()).to.include('InvalidInput');
+                expect((error as Error).toString()).toContain('InvalidInput');
                 console.log(' Malformed input attack correctly rejected');
             }
         });

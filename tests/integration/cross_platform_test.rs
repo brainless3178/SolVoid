@@ -1,3 +1,4 @@
+
 use std::fs;
 use serde::{Deserialize, Serialize};
 use solvoid::poseidon::PoseidonHasher;

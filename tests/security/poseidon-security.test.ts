@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { PoseidonHasher, PoseidonUtils } from '../../sdk/crypto/poseidon';
 
 describe('Poseidon Security Tests', () => {
@@ -27,7 +27,7 @@ describe('Poseidon Security Tests', () => {
             }
             
             // Should have substantial difference (at least 25% of bits)
-            expect(differingBits).to.be.greaterThan(hash1Hex.length * 0.25);
+            expect(differingBits.toBeGreaterThan(hash1Hex.length * 0.25);
         });
         
         it('Should resist collision attempts with similar inputs', async () => {
@@ -50,7 +50,7 @@ describe('Poseidon Security Tests', () => {
             }
             
             // All hashes should be unique
-            expect(hashes.size).to.equal(similarInputs.length);
+            expect(hashes.size).toBe(similarInputs.length);
         });
     });
     
@@ -59,7 +59,7 @@ describe('Poseidon Security Tests', () => {
             try {
                 // Test with undefined input
                 await PoseidonHasher.hashTwoInputs(undefined as any, undefined as any);
-                expect.fail('Should have thrown an error');
+                throw new Error('Should have thrown an error');
             } catch (error) {
                 expect(error).to.be.an('error');
             }
@@ -74,14 +74,14 @@ describe('Poseidon Security Tests', () => {
             const hash2 = await PoseidonHasher.hashTwoInputs(maxBuffer, maxBuffer);
             const hash3 = await PoseidonHasher.hashTwoInputs(zeroBuffer, maxBuffer);
             
-            expect(hash1).to.have.length(32);
-            expect(hash2).to.have.length(32);
-            expect(hash3).to.have.length(32);
+            expect(hash1).toHaveLength(32);
+            expect(hash2).toHaveLength(32);
+            expect(hash3).toHaveLength(32);
             
             // All should be different
-            expect(PoseidonUtils.bufferToHex(hash1)).to.not.equal(PoseidonUtils.bufferToHex(hash2));
-            expect(PoseidonUtils.bufferToHex(hash1)).to.not.equal(PoseidonUtils.bufferToHex(hash3));
-            expect(PoseidonUtils.bufferToHex(hash2)).to.not.equal(PoseidonUtils.bufferToHex(hash3));
+            expect(PoseidonUtils.bufferToHex(hash1)).not.toBe(PoseidonUtils.bufferToHex(hash2));
+            expect(PoseidonUtils.bufferToHex(hash1)).not.toBe(PoseidonUtils.bufferToHex(hash3));
+            expect(PoseidonUtils.bufferToHex(hash2)).not.toBe(PoseidonUtils.bufferToHex(hash3));
         });
     });
     
@@ -123,7 +123,7 @@ describe('Poseidon Security Tests', () => {
             PoseidonHasher.reset();
             const hash2 = await PoseidonHasher.hashTwoInputs(input1, input2);
             
-            expect(PoseidonUtils.bufferToHex(hash1)).to.equal(PoseidonUtils.bufferToHex(hash2));
+            expect(PoseidonUtils.bufferToHex(hash1)).toBe(PoseidonUtils.bufferToHex(hash2));
         });
         
         it('Should maintain determinism after many operations', async () => {
@@ -141,7 +141,7 @@ describe('Poseidon Security Tests', () => {
             
             // Original hash should still be the same
             const finalHash = await PoseidonHasher.hashTwoInputs(input1, input2);
-            expect(PoseidonUtils.bufferToHex(originalHash)).to.equal(PoseidonUtils.bufferToHex(finalHash));
+            expect(PoseidonUtils.bufferToHex(originalHash)).toBe(PoseidonUtils.bufferToHex(finalHash));
         });
     });
     
@@ -151,9 +151,9 @@ describe('Poseidon Security Tests', () => {
             const invalidSize = Buffer.alloc(33);
             const emptyBuffer = Buffer.alloc(0);
             
-            expect(PoseidonHasher.verifyFieldCompatibility(validHash)).to.be.true;
-            expect(PoseidonHasher.verifyFieldCompatibility(invalidSize)).to.be.false;
-            expect(PoseidonHasher.verifyFieldCompatibility(emptyBuffer)).to.be.false;
+            expect(PoseidonHasher.verifyFieldCompatibility(validHash)).toBe(true);
+            expect(PoseidonHasher.verifyFieldCompatibility(invalidSize)).toBe(false);
+            expect(PoseidonHasher.verifyFieldCompatibility(emptyBuffer)).toBe(false);
         });
         
         it('Should handle field arithmetic correctly', async () => {
@@ -163,11 +163,11 @@ describe('Poseidon Security Tests', () => {
             const hash = await PoseidonHasher.hashTwoInputs(input1, input2);
             
             // Result should be a valid field element
-            expect(hash).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(hash)).to.be.true;
+            expect(hash).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(hash)).toBe(true);
             
             // Should not be all zeros (invalid result)
-            expect(PoseidonUtils.bufferToHex(hash)).to.not.equal('00'.repeat(32));
+            expect(PoseidonUtils.bufferToHex(hash)).not.toBe('00'.repeat(32));
         });
     });
 });

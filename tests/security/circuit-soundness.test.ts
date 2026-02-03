@@ -7,7 +7,7 @@
  * If ANY invalid proof passes verification -> STOP PROTOCOL
  */
 
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import * as snarkjs from 'snarkjs';
 import fs from 'fs';
 import * as crypto from 'crypto';
@@ -21,7 +21,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
     let zkeyPath: string;
     let vkPath: string;
 
-    before(async () => {
+    beforeAll(async () => {
         // Check circuit artifacts exist
         wasmPath = './withdraw.wasm';
         zkeyPath = './withdraw_final.zkey';
@@ -73,7 +73,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
                 // MUST REJECT
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Corrupted secret correctly rejected');
 
             } catch (error) {
@@ -112,7 +112,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Corrupted nullifier correctly rejected');
 
             } catch (error) {
@@ -150,7 +150,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Mismatched nullifier hash correctly rejected');
 
             } catch (error) {
@@ -193,7 +193,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Corrupted path element correctly rejected');
 
             } catch (error) {
@@ -234,7 +234,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Wrong path index correctly rejected');
 
             } catch (error) {
@@ -269,7 +269,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Wrong root correctly rejected');
 
             } catch (error) {
@@ -306,7 +306,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Negative amount correctly rejected');
 
             } catch (error) {
@@ -341,7 +341,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Excessive fee correctly rejected');
 
             } catch (error) {
@@ -376,7 +376,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Negative fee correctly rejected');
 
             } catch (error) {
@@ -413,7 +413,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Zero recipient correctly rejected');
 
             } catch (error) {
@@ -452,7 +452,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, mutatedProof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Mutated proof correctly rejected');
 
             } catch (error) {
@@ -481,7 +481,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
             ];
 
             const isValid = await snarkjs.groth16.verify(vKey, wrongSignals, fakeProof);
-            expect(isValid).to.be.false;
+            expect(isValid).toBe(false);
             console.log(' Mismatched public signals correctly rejected');
         });
     });
@@ -513,7 +513,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' Maximum field values correctly rejected');
 
             } catch (error) {
@@ -545,7 +545,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-                expect(isValid).to.be.false;
+                expect(isValid).toBe(false);
                 console.log(' All zero inputs correctly rejected');
 
             } catch (error) {
@@ -554,7 +554,7 @@ describe(' Circuit Soundness - PROVE CANNOT CHEAT', () => {
         });
     });
 
-    after(() => {
+    afterAll(() => {
         console.log('\n CIRCUIT SOUNDNESS TESTS COMPLETE');
         console.log(' CRITICAL: If ANY test passed verification with invalid inputs, PROTOCOL IS UNSAFE');
         console.log(' All invalid proofs were correctly rejected');

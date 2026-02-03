@@ -218,31 +218,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (const input of testData.inputs) {
             const left = PoseidonUtils.hexToBuffer(input.left);
             const right = PoseidonUtils.hexToBuffer(input.right);
-            
+
             const hash = await PoseidonHasher.hashTwoInputs(left, right);
             const hashHex = PoseidonUtils.bufferToHex(hash);
             hash_results.push(hashHex);
         }
 
         // Build 4-level Merkle tree
-        let currentLevel = testData.merkle_data.leaves.map(leaf => 
+        let currentLevel = testData.merkle_data.leaves.map(leaf =>
             PoseidonUtils.hexToBuffer(leaf)
         );
 
         // Build tree level by level
         for (let level = 0; level < 4; level++) {
             const nextLevel = [];
-            
+
             for (let i = 0; i < currentLevel.length; i += 2) {
                 const left = currentLevel[i];
-                const right = (i + 1 < currentLevel.length) 
-                    ? currentLevel[i + 1] 
+                const right = (i + 1 < currentLevel.length)
+                    ? currentLevel[i + 1]
                     : PoseidonUtils.zeroBuffer(); // Zero padding
-                
+
                 const parent = await PoseidonHasher.hashTwoInputs(left, right);
                 nextLevel.push(parent);
             }
-            
+
             currentLevel = nextLevel;
         }
 
@@ -269,7 +269,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             const rustHash = rustResults.hash_results[i];
             const tsHash = tsResults.hash_results[i];
             const matches = rustHash === tsHash;
-            
+
             console.log(`  Test ${i + 1}: ${matches ? '' : ''}`);
             if (!matches) {
                 console.log(`    Rust:    ${rustHash}`);
@@ -282,7 +282,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         console.log('\n Merkle Tree Root:');
         const rootMatches = rustResults.merkle_root === tsResults.merkle_root;
         console.log(`  Root: ${rootMatches ? '' : ''}`);
-        
+
         if (!rootMatches) {
             console.log(`    Rust:    ${rustResults.merkle_root}`);
             console.log(`    TS:      ${tsResults.merkle_root}`);
@@ -340,6 +340,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 // Export for use in test framework
 export { CrossPlatformConsistencyTest };
+
+// Jest test wrapper
+describe('Cross-Platform Poseidon Consistency', () => {
+    // Skip these tests if Rust toolchain is not available
+    const hasRustToolchain = (() => {
+        try {
+            require('child_process').execSync('cargo --version', { stdio: 'ignore' });
+            return true;
+        } catch {
+            return false;
+        }
+    })();
+
+    it('should produce identical hashes between Rust and TypeScript (requires Rust)', async () => {
+        if (!hasRustToolchain) {
+            console.log('Skipping: Rust toolchain not available');
+            return;
+        }
+        await CrossPlatformConsistencyTest.run();
+    }, 120000); // 2 minute timeout for Rust compilation
+});
 
 // Run test if this file is executed directly
 if (require.main === module) {

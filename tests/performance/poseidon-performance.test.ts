@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import { PoseidonHasher, PoseidonUtils } from '../../sdk/crypto/poseidon';
 
 describe('Poseidon Performance Tests', () => {
@@ -20,7 +20,7 @@ describe('Poseidon Performance Tests', () => {
             const avgTimePerHash = duration / iterations;
             
             // Should average less than 1ms per hash
-            expect(avgTimePerHash).to.be.lessThan(1);
+            expect(avgTimePerHash).toBeLessThan(1);
             console.log(`Average time per hash: ${avgTimePerHash.toFixed(3)}ms`);
             console.log(`Total time for ${iterations} hashes: ${duration.toFixed(2)}ms`);
         });
@@ -54,7 +54,7 @@ describe('Poseidon Performance Tests', () => {
             const avgTimePerHash = duration / (batchSize * batches);
             
             // Batch operations should be efficient
-            expect(avgTimePerHash).to.be.lessThan(2);
+            expect(avgTimePerHash).toBeLessThan(2);
             console.log(`Batch processing: ${avgTimePerHash.toFixed(3)}ms per hash`);
         });
     });
@@ -90,14 +90,14 @@ describe('Poseidon Performance Tests', () => {
                 const endTime = process.hrtime.bigint();
                 const duration = Number(endTime - startTime) / 1000000;
                 
-                expect(currentLevel).to.have.length(1);
-                expect(currentLevel[0]).to.have.length(32);
+                expect(currentLevel).toHaveLength(1);
+                expect(currentLevel[0]).toHaveLength(32);
                 
                 const timePerLeaf = duration / size;
                 console.log(`Tree size ${size}: ${duration.toFixed(2)}ms total, ${timePerLeaf.toFixed(3)}ms per leaf`);
                 
                 // Performance should scale reasonably
-                expect(timePerLeaf).to.be.lessThan(0.1); // Less than 0.1ms per leaf
+                expect(timePerLeaf).toBeLessThan(0.1); // Less than 0.1ms per leaf
             }
         });
         
@@ -157,14 +157,14 @@ describe('Poseidon Performance Tests', () => {
                 
                 // Verify proof
                 const computedRoot = await PoseidonHasher.computeMerkleRoot(leaf, proof, indices);
-                expect(PoseidonUtils.bufferToHex(computedRoot)).to.equal(PoseidonUtils.bufferToHex(root));
+                expect(PoseidonUtils.bufferToHex(computedRoot)).toBe(PoseidonUtils.bufferToHex(root));
             }
             
             const endTime = process.hrtime.bigint();
             const duration = Number(endTime - startTime) / 1000000;
             const avgTimePerProof = duration / proofTests;
             
-            expect(avgTimePerProof).to.be.lessThan(5); // Less than 5ms per proof
+            expect(avgTimePerProof).toBeLessThan(5); // Less than 5ms per proof
             console.log(`Proof verification: ${avgTimePerProof.toFixed(3)}ms per proof`);
         });
     });
@@ -190,7 +190,7 @@ describe('Poseidon Performance Tests', () => {
             const memoryIncrease = finalMemory - initialMemory;
             
             // Memory increase should be minimal (< 1MB)
-            expect(memoryIncrease).to.be.lessThan(1024 * 1024);
+            expect(memoryIncrease).toBeLessThan(1024 * 1024);
             console.log(`Memory increase: ${(memoryIncrease / 1024).toFixed(2)}KB`);
         });
         
@@ -216,8 +216,8 @@ describe('Poseidon Performance Tests', () => {
             const endTime = process.hrtime.bigint();
             const duration = Number(endTime - startTime) / 1000000;
             
-            expect(results).to.have.length(largeBufferSize - 1);
-            expect(duration).to.be.lessThan(10000); // Should complete in < 10 seconds
+            expect(results).toHaveLength(largeBufferSize - 1);
+            expect(duration).toBeLessThan(10000); // Should complete in < 10 seconds
             
             const avgTimePerOp = duration / (largeBufferSize - 1);
             console.log(`Large buffer operations: ${avgTimePerOp.toFixed(3)}ms per operation`);
@@ -253,8 +253,8 @@ describe('Poseidon Performance Tests', () => {
             const totalOps = concurrentOps * opsPerThread;
             const avgTimePerOp = duration / totalOps;
             
-            expect(allResults).to.have.length(concurrentOps);
-            expect(duration).to.be.lessThan(5000); // Should complete in < 5 seconds
+            expect(allResults).toHaveLength(concurrentOps);
+            expect(duration).toBeLessThan(5000); // Should complete in < 5 seconds
             
             console.log(`Concurrent operations: ${avgTimePerOp.toFixed(3)}ms per operation`);
             console.log(`Total time for ${totalOps} operations: ${duration.toFixed(2)}ms`);

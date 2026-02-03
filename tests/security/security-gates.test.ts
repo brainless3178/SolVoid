@@ -11,7 +11,7 @@
  * - Fee manipulation resistance
  */
 
-import { expect } from 'chai';
+// Jest provides expect globally, no chai needed
 import { Program, AnchorProvider, web3, BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Keypair } from '@solana/web3.js';
 import * as snarkjs from 'snarkjs';
@@ -50,7 +50,7 @@ describe(' SolVoid Security Gates', () => {
         await connection.confirmTransaction(airdropTx);
     };
     
-    before(async () => {
+    beforeAll(async () => {
         await setup();
     });
 
@@ -86,15 +86,15 @@ describe(' SolVoid Security Gates', () => {
                     zkeyPath
                 );
                 
-                expect(proof).to.exist;
-                expect(publicSignals).to.have.length(5); // root, nullifierHash, recipient, fee, refund
+                expect(proof).toBeDefined();
+                expect(publicSignals).toHaveLength(5); // root, nullifierHash, recipient, fee, refund
                 
                 // Verify the proof
                 const vkPath = './build/circuits/withdraw_vk.json';
                 const vKey = JSON.parse(fs.readFileSync(vkPath, 'utf8'));
                 
                 const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-                expect(isValid).to.be.true;
+                expect(isValid).toBe(true);
                 
                 console.log(' Circuit constraints validated');
                 
@@ -124,7 +124,7 @@ describe(' SolVoid Security Gates', () => {
             };
             
             const isValid = await snarkjs.groth16.verify(vKey, invalidSignals, fakeProof);
-            expect(isValid).to.be.false;
+            expect(isValid).toBe(false);
             
             console.log(' Invalid proof rejection validated');
         });
@@ -151,9 +151,9 @@ describe(' SolVoid Security Gates', () => {
             expect(vk).to.have.property('IC');
             
             // Verify point formats
-            expect(vk.vk_alpha_1).to.have.length(3);
-            expect(vk.vk_beta_2).to.have.length(3);
-            expect(vk.IC).to.be.an('array');
+            expect(vk.vk_alpha_1).toHaveLength(3);
+            expect(vk.vk_beta_2).toHaveLength(3);
+            expect(vk.IC).toBeInstanceOf(Array);
             
             console.log(' Verification key format validated');
         });
@@ -171,9 +171,9 @@ describe(' SolVoid Security Gates', () => {
             const transcript = JSON.parse(fs.readFileSync(transcriptPath, 'utf8'));
             
             // Verify transcript references the same verification key
-            expect(transcript.verification_keys).to.exist;
-            expect(transcript.ceremony.transcript_hash).to.exist;
-            expect(transcript.ceremony.contributions).to.be.greaterThan(0);
+            expect(transcript.verification_keys).toBeDefined();
+            expect(transcript.ceremony.transcript_hash).toBeDefined();
+            expect(transcript.ceremony.contributions).toBeGreaterThan(0);
             
             console.log(' Ceremony transcript integrity validated');
         });
@@ -221,10 +221,10 @@ describe(' SolVoid Security Gates', () => {
                 // Verify atomic updates
                 const finalState = await program.account.globalState.fetch(statePDA) as any;
                 
-                expect(finalState.nextIndex).to.equal(initialIndex + 1);
+                expect(finalState.nextIndex).toBe(initialIndex + 1);
                 expect(finalState.root).to.not.deep.equal(initialRoot);
-                expect(finalState.commitments[initialIndex.toNumber()]).to.deep.equal(commitment);
-                expect(finalState.isInitialized).to.be.true;
+                expect(finalState.commitments[initialIndex.toNumber()]).toEqual(commitment);
+                expect(finalState.isInitialized).toBe(true);
                 
                 console.log(' Merkle tree atomicity validated');
                 
@@ -240,7 +240,7 @@ describe(' SolVoid Security Gates', () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             const maxLeaves = Math.pow(2, MERKLE_DEPTH);
             
-            expect(state.nextIndex.toNumber()).to.be.lessThan(maxLeaves);
+            expect(state.nextIndex.toNumber()).toBeLessThan(maxLeaves);
             
             console.log(' Tree overflow protection validated');
         });
@@ -257,16 +257,16 @@ describe(' SolVoid Security Gates', () => {
             
             // Minimum fee
             const minFee = minDeposit * feeRate / 10000;
-            expect(minFee).to.be.greaterThan(0);
+            expect(minFee).toBeGreaterThan(0);
             
             // Maximum fee (1%)
             const maxFee = minDeposit * 100 / 10000;
-            expect(maxFee).to.be.greaterThan(minFee);
+            expect(maxFee).toBeGreaterThan(minFee);
             
             // Verify economic state
-            expect(state.economicState.totalVolume).to.be.greaterThanOrEqual(0);
-            expect(state.economicState.totalFeesCollected).to.be.greaterThanOrEqual(0);
-            expect(state.economicState.emergencyFeeMultiplier).to.be.greaterThanOrEqual(1);
+            expect(state.economicState.totalVolume).toBeGreaterThanOrEqual(0);
+            expect(state.economicState.totalFeesCollected).toBeGreaterThanOrEqual(0);
+            expect(state.economicState.emergencyFeeMultiplier).toBeGreaterThanOrEqual(1);
             
             console.log(' Economic constraints validated');
         });
@@ -276,11 +276,11 @@ describe(' SolVoid Security Gates', () => {
             // Instead, we verify the state invariants
             const state = await program.account.globalState.fetch(statePDA) as any;
             
-            expect(state.totalDeposits).to.be.greaterThanOrEqual(state.totalWithdrawn);
-            expect(state.isInitialized).to.be.true;
+            expect(state.totalDeposits).toBeGreaterThanOrEqual(state.totalWithdrawn);
+            expect(state.isInitialized).toBe(true);
             
             if (state.totalDeposits.gt(0)) {
-                expect(state.totalWithdrawn.toNumber()).to.be.lessThanOrEqual(state.totalDeposits.toNumber());
+                expect(state.totalWithdrawn.toNumber()).toBeLessThanOrEqual(state.totalDeposits.toNumber());
             }
             
             console.log(' Economic invariants validated');
@@ -310,9 +310,9 @@ describe(' SolVoid Security Gates', () => {
                     .signers([fakeAdmin])
                     .rpc();
                 
-                expect.fail('Should have failed with unauthorized admin');
+                throw new Error('Should have failed with unauthorized admin');
             } catch (error: any) {
-                expect(error.toString()).to.include('AlreadyInitialized');
+                expect(error.toString()).toContain('AlreadyInitialized');
                 console.log(' Access control validated');
             }
         });
@@ -336,9 +336,9 @@ describe(' SolVoid Security Gates', () => {
                     .signers([adminKeypair])
                     .rpc();
                 
-                expect.fail('Should have failed with invalid verification keys');
+                throw new Error('Should have failed with invalid verification keys');
             } catch (error: any) {
-                expect(error.toString()).to.include('AlreadyInitialized');
+                expect(error.toString()).toContain('AlreadyInitialized');
                 console.log(' Verification key validation enforced');
             }
         });
@@ -369,7 +369,7 @@ describe(' SolVoid Security Gates', () => {
                 const results = await Promise.allSettled(depositPromises);
                 const successful = results.filter(r => r.status === 'fulfilled').length;
                 
-                expect(successful).to.be.greaterThan(0);
+                expect(successful).toBeGreaterThan(0);
                 console.log(` Concurrent deposits: ${successful}/${numDeposits} successful`);
                 
             } catch (error: any) {
@@ -396,16 +396,16 @@ describe(' SolVoid Security Gates', () => {
             const state = await program.account.globalState.fetch(statePDA) as any;
             
             // Check initialization
-            expect(state.isInitialized).to.be.true;
+            expect(state.isInitialized).toBe(true);
             
             // Check economic state
-            expect(state.economicState).to.exist;
-            expect(state.economicState.totalVolume).to.be.greaterThanOrEqual(0);
+            expect(state.economicState).toBeDefined();
+            expect(state.economicState.totalVolume).toBeGreaterThanOrEqual(0);
             
             // Check Merkle tree state
-            expect(state.zeros).to.have.length(MERKLE_DEPTH);
-            expect(state.filledSubtrees).to.have.length(MERKLE_DEPTH);
-            expect(state.rootHistory).to.have.length(1000);
+            expect(state.zeros).toHaveLength(MERKLE_DEPTH);
+            expect(state.filledSubtrees).toHaveLength(MERKLE_DEPTH);
+            expect(state.rootHistory).toHaveLength(1000);
             
             // Check security flags
             expect(state.pauseWithdrawals).to.be.a('boolean');

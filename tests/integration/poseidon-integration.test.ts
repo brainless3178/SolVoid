@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+// Jest provides expect globally
 import { PoseidonHasher, PoseidonUtils } from '../../sdk/crypto/poseidon';
 
 describe('Poseidon Integration Tests', () => {
@@ -9,11 +9,11 @@ describe('Poseidon Integration Tests', () => {
             const nullifier = PoseidonUtils.hexToBuffer('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
 
             const commitment = await PoseidonHasher.computeCommitment(secret, nullifier, 1000000n);
-            expect(commitment).to.have.length(32);
+            expect(commitment).toHaveLength(32);
 
             // 2. Generate nullifier hash
             const nullifierHash = await PoseidonHasher.computeNullifierHash(nullifier);
-            expect(nullifierHash).to.have.length(32);
+            expect(nullifierHash).toHaveLength(32);
 
             // 3. Build Merkle tree with multiple commitments
             const commitments = [
@@ -40,15 +40,15 @@ describe('Poseidon Integration Tests', () => {
             const right = await PoseidonHasher.hashTwoInputs(commitments[2], commitments[3]);
             const merkleRoot = await PoseidonHasher.hashTwoInputs(left, right);
 
-            expect(merkleRoot).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(merkleRoot)).to.be.true;
+            expect(merkleRoot).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(merkleRoot)).toBe(true);
 
             // 5. Generate Merkle proof for first commitment
             const proof = [commitments[1]]; // Sibling for first commitment
             const indices = [0]; // First commitment is left sibling
 
             const computedRoot = await PoseidonHasher.computeMerkleRoot(commitments[0], proof, indices);
-            expect(PoseidonUtils.bufferToHex(computedRoot)).to.equal(PoseidonUtils.bufferToHex(merkleRoot));
+            expect(PoseidonUtils.bufferToHex(computedRoot)).toBe(PoseidonUtils.bufferToHex(merkleRoot));
         });
     });
 
@@ -103,8 +103,8 @@ describe('Poseidon Integration Tests', () => {
             const endTime = Date.now();
             const duration = endTime - startTime;
 
-            expect(currentLevel).to.have.length(1);
-            expect(currentLevel[0]).to.have.length(32);
+            expect(currentLevel).toHaveLength(1);
+            expect(currentLevel[0]).toHaveLength(32);
             expect(duration).to.be.lessThan(1000); // Should complete in < 1 second
 
             console.log(`Built ${leafCount}-leaf Merkle tree in ${duration}ms`);
@@ -117,8 +117,8 @@ describe('Poseidon Integration Tests', () => {
             const minField = PoseidonUtils.hexToBuffer('0000000000000000000000000000000000000000000000000000000000000000');
 
             const hash = await PoseidonHasher.hashTwoInputs(maxField, minField);
-            expect(hash).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(hash)).to.be.true;
+            expect(hash).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(hash)).toBe(true);
         });
 
         it('Should handle alternating bit patterns', async () => {
@@ -126,8 +126,8 @@ describe('Poseidon Integration Tests', () => {
             const pattern2 = PoseidonUtils.hexToBuffer('5555555555555555555555555555555555555555555555555555555555555555555');
 
             const hash = await PoseidonHasher.hashTwoInputs(pattern1, pattern2);
-            expect(hash).to.have.length(32);
-            expect(PoseidonHasher.verifyFieldCompatibility(hash)).to.be.true;
+            expect(hash).toHaveLength(32);
+            expect(PoseidonHasher.verifyFieldCompatibility(hash)).toBe(true);
         });
 
         it('Should maintain consistency across multiple operations', async () => {
@@ -143,8 +143,8 @@ describe('Poseidon Integration Tests', () => {
             const hex2 = PoseidonUtils.bufferToHex(hash2);
             const hex3 = PoseidonUtils.bufferToHex(hash3);
 
-            expect(hex1).to.equal(hex2);
-            expect(hex2).to.equal(hex3);
+            expect(hex1).toBe(hex2);
+            expect(hex2).toBe(hex3);
         });
     });
 
@@ -161,14 +161,14 @@ describe('Poseidon Integration Tests', () => {
                 hashes.push(hash);
 
                 // Verify each hash is valid
-                expect(hash).to.have.length(32);
-                expect(PoseidonHasher.verifyFieldCompatibility(hash)).to.be.true;
+                expect(hash).toHaveLength(32);
+                expect(PoseidonHasher.verifyFieldCompatibility(hash)).toBe(true);
             }
 
             // All hashes should be identical
             const firstHash = PoseidonUtils.bufferToHex(hashes[0]);
             for (let i = 1; i < hashes.length; i++) {
-                expect(PoseidonUtils.bufferToHex(hashes[i])).to.equal(firstHash);
+                expect(PoseidonUtils.bufferToHex(hashes[i])).toBe(firstHash);
             }
         });
 
@@ -187,7 +187,7 @@ describe('Poseidon Integration Tests', () => {
             // All results should be identical
             const firstResult = PoseidonUtils.bufferToHex(results[0]);
             for (let i = 1; i < results.length; i++) {
-                expect(PoseidonUtils.bufferToHex(results[i])).to.equal(firstResult);
+                expect(PoseidonUtils.bufferToHex(results[i])).toBe(firstResult);
             }
         });
     });
